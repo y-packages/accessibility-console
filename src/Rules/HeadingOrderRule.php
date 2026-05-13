@@ -3,6 +3,8 @@
 namespace YakNet\AccessibilityConsole\Rules;
 
 use YakNet\AccessibilityConsole\Core\AbstractRule;
+use YakNet\AccessibilityConsole\Core\Severity;
+use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
 class HeadingOrderRule extends AbstractRule
 {
@@ -26,6 +28,6 @@ class HeadingOrderRule extends AbstractRule
         return $violations;
     }
 
-    public function getStandardId(): string { return 'WCAG 2.1 1.3.1'; }
-    public function getSeverity(): string { return 'Major'; }
+    public function getStandard(): WCAGStandard { return WCAGStandard::A; }
+    public function getSeverity(): Severity { return Severity::WARNING; }
 }

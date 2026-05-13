@@ -3,6 +3,8 @@
 namespace YakNet\AccessibilityConsole\Rules;
 
 use YakNet\AccessibilityConsole\Core\AbstractRule;
+use YakNet\AccessibilityConsole\Core\Severity;
+use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
 class ImageAltRule extends AbstractRule
 {
@@ -22,6 +24,6 @@ class ImageAltRule extends AbstractRule
         return $violations;
     }
 
-    public function getStandardId(): string { return 'WCAG 2.1 1.1.1'; }
-    public function getSeverity(): string { return 'Critical'; }
+    public function getStandard(): WCAGStandard { return WCAGStandard::A; }
+    public function getSeverity(): Severity { return Severity::CRITICAL; }
 }

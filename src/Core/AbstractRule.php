@@ -10,22 +10,23 @@ abstract class AbstractRule
     abstract public function check(\DOMDocument $doc): array;
 
     /**
-     * Get the WCAG standard ID (e.g., WCAG 2.1 1.1.1)
+     * Get the WCAG standard Enum
      */
-    abstract public function getStandardId(): string;
+    abstract public function getStandard(): WCAGStandard;
 
     /**
-     * Get the severity level (Critical, Major, Minor)
+     * Get the severity level Enum
      */
-    abstract public function getSeverity(): string;
+    abstract public function getSeverity(): Severity;
 
     protected function createViolation(string $message, \DOMElement $element): Violation
     {
         return new Violation(
+            ruleId: (new \ReflectionClass($this))->getShortName(),
             message: $message,
-            htmlSnippet: $element->ownerDocument->saveHTML($element),
             severity: $this->getSeverity(),
-            standard: $this->getStandardId()
+            standard: $this->getStandard(),
+            htmlSnippet: $element->ownerDocument->saveHTML($element)
         );
     }
 }
