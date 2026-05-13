@@ -17,7 +17,7 @@
     "authors": [
         {
             "name": "YakNet Bilişim",
-            "email": "dev@yak.net.tr",
+            "email": "info@yakhub.com.tr",
             "role": "Developer"
         }
     ],
@@ -45,5 +45,10 @@
         "bin/a11y"
     ],
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    }
 }

@@ -37,7 +37,7 @@ If it's about ARIA roles, add the correct ones.
 PROMPT;
 
         try {
-            $result = $this->client->geminiPro()->generateContent($prompt);
+            $result = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
             $suggestion = trim($result->text());
             
             // Clean up if AI included markdown blocks anyway
