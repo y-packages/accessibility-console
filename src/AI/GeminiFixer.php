@@ -45,8 +45,7 @@ PROMPT;
             
             return $suggestion;
         } catch (\Throwable $e) {
-            // Log error if needed
-            return null;
+            return "AI Düzeltme Hatası: " . $e->getMessage();
         }
     }
 }
