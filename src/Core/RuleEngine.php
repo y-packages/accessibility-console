@@ -2,23 +2,26 @@
 
 namespace YakNet\AccessibilityConsole\Core;
 
-use YakNet\AccessibilityConsole\Rules\RuleInterface;
-
 class RuleEngine
 {
-    /** @var RuleInterface[] */
+    /** @var AbstractRule[] */
     private array $rules = [];
 
-    public function addRule(RuleInterface $rule): void
+    public function addRule(AbstractRule $rule): void
     {
         $this->rules[] = $rule;
     }
 
     /**
-     * @return RuleInterface[]
+     * @return Violation[]
      */
-    public function getRules(): array
+    public function run(\DOMDocument $doc): array
     {
-        return $this->rules;
+        $allViolations = [];
+        foreach ($this->rules as $rule) {
+            $violations = $rule->check($doc);
+            $allViolations = array_merge($allViolations, $violations);
+        }
+        return $allViolations;
     }
 }

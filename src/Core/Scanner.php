@@ -2,62 +2,31 @@
 
 namespace YakNet\AccessibilityConsole\Core;
 
-use DOMDocument;
-use YakNet\AccessibilityConsole\Rules\RuleInterface;
-
 class Scanner
 {
-    private array $rules = [];
-
-    public function __construct(
-        private readonly ?RuleEngine $engine = null
-    ) {
-        if ($this->engine) {
-            $this->rules = $this->engine->getRules();
+    public function __construct(private ?RuleEngine $engine = null)
+    {
+        if ($this->engine === null) {
+            $this->engine = new RuleEngine();
         }
     }
 
-    public function addRule(RuleInterface $rule): void
-    {
-        $this->rules[] = $rule;
-    }
-
     /**
+     * Scan HTML content for accessibility violations.
+     *
+     * @param string $html
      * @return Violation[]
      */
     public function scan(string $html): array
     {
-        if (trim($html) === '') {
+        if (empty(trim($html))) {
             return [];
         }
 
-        $dom = new DOMDocument();
-        $previousState = libxml_use_internal_errors(true);
-        $loaded = $dom->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_NOERROR | LIBXML_NOWARNING);
-        libxml_clear_errors();
-        libxml_use_internal_errors($previousState);
+        $doc = new \DOMDocument();
+        // Suppress warnings for malformed HTML
+        @$doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
 
-        if (!$loaded) {
-            return [];
-        }
-
-        $violations = [];
-        $elements = $dom->getElementsByTagName('*');
-
-        foreach ($elements as $element) {
-            if (!$element instanceof \DOMElement) continue;
-            foreach ($this->rules as $rule) {
-                try {
-                    $violation = $rule->check($element);
-                    if ($violation) {
-                        $violations[] = $violation;
-                    }
-                } catch (\Throwable) {
-                    continue;
-                }
-            }
-        }
-
-        return $violations;
+        return $this->engine->run($doc);
     }
 }
