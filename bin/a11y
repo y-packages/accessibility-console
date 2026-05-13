@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use Symfony\Component\Console\Application;
+use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
+use YakNet\AccessibilityConsole\Console\Command\FixCommand;
+
+$application = new Application('YakNet Accessibility Console', '2.0.0');
+
+// Add commands
+$application->add(new ScanCommand());
+$application->add(new FixCommand());
+
+$application->run();

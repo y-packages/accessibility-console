@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr"> <!-- FIXED: Added lang attribute -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YakNet Dynamic Demo (Fixed)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        header {
+            background: #333;
+            color: #fff;
+            padding: 1rem;
+        }
+
+        nav a {
+            color: #fff;
+            margin-right: 1rem;
+            text-decoration: none;
+        }
+
+        .container {
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+
+        .btn {
+            background: #28a745;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container" style="padding: 0;">
+            <h1>My Dynamic Site (Accessible)</h1>
+            <nav>
+                <a href="?page=home">Home</a>
+                <a href="?page=contact">Contact</a>
+                <a href="?page=about">About</a>
+                <!-- FIXED: Added aria-label to empty link, or removed it/added text -->
+                <a href="#" class="btn" aria-label="Profile">👤</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <h2>Latest Products</h2>
+        <p>Welcome to our accessible product catalog.</p>
+
+
+        <div class="products">
+            <div class="card">
+                <!-- FIXED: Added alt attribute describing the product -->
+                <img src="images/gadget.jpg" width="100" alt="Super Gadget">
+                <h3>Super Gadget</h3>
+                <p>$99</p>
+                <button class="btn">Buy Now</button>
+            </div>
+            <div class="card">
+                <!-- FIXED: Added alt attribute describing the product -->
+                <img src="images/widget.png" width="100" alt="Mega Widget">
+                <h3>Mega Widget</h3>
+                <p>$49</p>
+                <button class="btn">Buy Now</button>
+            </div>
+            <div class="card">
+                <!-- FIXED: Added alt attribute describing the product -->
+                <img src="images/thing.jpg" width="100" alt="Ultra Thing">
+                <h3>Ultra Thing</h3>
+                <p>$199</p>
+                <button class="btn">Buy Now</button>
+            </div>
+        </div>
+
+        <hr>
+
+        <h3>Sponsors</h3>
+        <div>
+            <!-- FIXED: Added empty alt="" for decorative images -->
+            <img src="https://via.placeholder.com/150" alt="">
+            <img src="https://via.placeholder.com/150" alt="">
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 2rem; background: #f4f4f4; margin-top: 2rem;">
+        &copy; 2026 YakNet Demo
+    </footer>
+    <div
+        style="position:fixed; bottom:10px; right:10px; background:#28a745; color:white; padding:8px 15px; border-radius:4px; font-family:sans-serif; font-weight:bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">
+        ✅ Accessibility: 0 Errors</div>
+</body>
+
+</html>

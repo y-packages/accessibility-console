@@ -1,0 +1,49 @@
+{
+    "name": "yaknet/accessibility-console",
+    "description": "A professional AI-powered WCAG 2.1 accessibility scanner with self-healing capabilities.",
+    "keywords": [
+        "accessibility",
+        "wcag",
+        "a11y",
+        "scanner",
+        "ai",
+        "gemini",
+        "self-healing",
+        "yaknet"
+    ],
+    "homepage": "https://forum.yak.net.tr",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "YakNet Bilişim",
+            "email": "dev@yak.net.tr",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "ext-dom": "*",
+        "ext-libxml": "*",
+        "ext-mbstring": "*",
+        "symfony/console": "^6.4|^7.0",
+        "symfony/yaml": "^6.4|^7.0",
+        "monolog/monolog": "^3.0",
+        "vlucas/phpdotenv": "^5.6",
+        "google-gemini-php/client": "^1.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5",
+        "phpstan/phpstan": "^1.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "YakNet\\AccessibilityConsole\\": "src/"
+        }
+    },
+    "bin": [
+        "bin/a11y"
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
