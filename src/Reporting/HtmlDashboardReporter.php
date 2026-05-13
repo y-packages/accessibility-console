@@ -22,6 +22,7 @@ class HtmlDashboardReporter
                 <td><span class='badge'>{$v->ruleId}</span></td>
                 <td>{$v->message}</td>
                 <td><pre><code>" . htmlspecialchars($v->htmlSnippet) . "</code></pre></td>
+                <td>" . ($v->fixSuggestion ? "<pre class='ai-fix'><code>" . htmlspecialchars($v->fixSuggestion) . "</code></pre>" : "<span class='text-muted'>Manual fix required</span>") . "</td>
                 <td>" . ($v->location ? "{$v->location['file']}:{$v->location['line']}" : 'N/A') . "</td>
             </tr>";
         }
@@ -43,8 +44,10 @@ class HtmlDashboardReporter
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; }
         pre { background: #272822; color: #f8f8f2; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .ai-fix { border-left: 4px solid #2ecc71; background: #1e1e1e; }
         .badge { background: #34495e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
         .severity-error { background: #fff5f5; }
+        .text-muted { color: #95a5a6; font-size: 0.9em; font-style: italic; }
     </style>
 </head>
 <body>
@@ -69,6 +72,7 @@ class HtmlDashboardReporter
                     <th>Rule ID</th>
                     <th>Issue</th>
                     <th>Code Snippet</th>
+                    <th>AI Recommendation</th>
                     <th>Source Location</th>
                 </tr>
             </thead>

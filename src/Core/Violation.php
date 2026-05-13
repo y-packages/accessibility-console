@@ -2,7 +2,7 @@
 
 namespace YakNet\AccessibilityConsole\Core;
 
-readonly class Violation
+class Violation
 {
     public function __construct(
         public string $ruleId,

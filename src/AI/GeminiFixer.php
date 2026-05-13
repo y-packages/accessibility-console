@@ -11,15 +11,23 @@ class GeminiFixer
 
     public function __construct(private readonly ?string $apiKey)
     {
-        if ($this->apiKey && class_exists(Gemini::class)) {
-            $this->client = Gemini::client($this->apiKey);
+        if ($this->apiKey) {
+            try {
+                $this->client = \Gemini::client($this->apiKey);
+            } catch (\Throwable) {
+                $this->client = null;
+            }
         }
     }
 
     public function suggestFix(Violation $violation): ?string
     {
+        if (!$this->apiKey) {
+            return "Hata: GEMINI_API_KEY bulunamadı.";
+        }
+
         if (!$this->client) {
-            return null;
+            return "Hata: Gemini istemcisi başlatılamadı. Kütüphane eksik olabilir.";
         }
 
         $prompt = <<<PROMPT
@@ -37,7 +45,8 @@ If it's about ARIA roles, add the correct ones.
 PROMPT;
 
         try {
-            $result = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
+            // Stable model: gemini-1.5-flash
+            $result = $this->client->generativeModel('gemini-1.5-flash')->generateContent($prompt);
             $suggestion = trim($result->text());
             
             // Clean up if AI included markdown blocks anyway

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>A11y Report - demo/broken.html</title>
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f4f7f6; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        h1 { color: #2c3e50; margin-top: 0; }
+        .summary { display: flex; gap: 20px; margin-bottom: 30px; }
+        .card { background: #3498db; color: white; padding: 20px; border-radius: 8px; flex: 1; text-align: center; }
+        .card.error { background: #e74c3c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        th { background: #f8f9fa; }
+        pre { background: #272822; color: #f8f8f2; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+        .ai-fix { border-left: 4px solid #2ecc71; background: #1e1e1e; }
+        .badge { background: #34495e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
+        .severity-error { background: #fff5f5; }
+        .text-muted { color: #95a5a6; font-size: 0.9em; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Accessibility Report</h1>
+        <p>Target: <strong>demo/broken.html</strong> | Generated: 2026-05-13 09:46:04</p>
+        
+        <div class="summary">
+            <div class="card error">
+                <h2>4</h2>
+                <p>Violations Found</p>
+            </div>
+            <div class="card">
+                <h2>WCAG 2.1</h2>
+                <p>Standard Level</p>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Rule ID</th>
+                    <th>Issue</th>
+                    <th>Code Snippet</th>
+                    <th>AI Recommendation</th>
+                    <th>Source Location</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            <tr class='severity-error'>
+                <td><span class='badge'>WCAG_3_1_1_LANG</span></td>
+                <td>The html element must have a lang attribute.</td>
+                <td><pre><code>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Broken Page&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Welcome to a broken page&lt;/h1&gt;
+    
+    &lt;!-- Missing alt attribute --&gt;
+    &lt;img src=&quot;logo.png&quot;&gt;
+    
+    &lt;!-- Empty link --&gt;
+    &lt;a href=&quot;https://google.com&quot;&gt;&lt;/a&gt;
+    
+    &lt;!-- Empty button --&gt;
+    &lt;button type=&quot;submit&quot;&gt;&lt;/button&gt;
+    
+    &lt;p&gt;This page has multiple accessibility issues.&lt;/p&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre></td>
+                <td><pre class='ai-fix'><code>Hata: GEMINI_API_KEY bulunamadı.</code></pre></td>
+                <td>N/A</td>
+            </tr>
+            <tr class='severity-error'>
+                <td><span class='badge'>WCAG_1_1_1_ALT</span></td>
+                <td>Images must have an alt attribute.</td>
+                <td><pre><code>&lt;img src=&quot;logo.png&quot;&gt;</code></pre></td>
+                <td><pre class='ai-fix'><code>Hata: GEMINI_API_KEY bulunamadı.</code></pre></td>
+                <td>N/A</td>
+            </tr>
+            <tr class='severity-error'>
+                <td><span class='badge'>WCAG_2_4_4_LINK_TEXT</span></td>
+                <td>Links must have discernible text.</td>
+                <td><pre><code>&lt;a href=&quot;https://google.com&quot;&gt;&lt;/a&gt;</code></pre></td>
+                <td><pre class='ai-fix'><code>Hata: GEMINI_API_KEY bulunamadı.</code></pre></td>
+                <td>N/A</td>
+            </tr>
+            <tr class='severity-error'>
+                <td><span class='badge'>WCAG_4_1_2_BUTTON</span></td>
+                <td>Buttons must have discernible text.</td>
+                <td><pre><code>&lt;button type=&quot;submit&quot;&gt;&lt;/button&gt;</code></pre></td>
+                <td><pre class='ai-fix'><code>Hata: GEMINI_API_KEY bulunamadı.</code></pre></td>
+                <td>N/A</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

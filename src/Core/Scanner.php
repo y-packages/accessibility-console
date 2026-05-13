@@ -11,6 +11,11 @@ class Scanner
         }
     }
 
+    public function addRule(mixed $rule): void
+    {
+        $this->engine->addRule($rule);
+    }
+
     /**
      * Scan HTML content for accessibility violations.
      *

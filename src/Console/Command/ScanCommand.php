@@ -83,6 +83,7 @@ class ScanCommand extends Command
                 $io->write("  <fg=gray>AI Fix Suggestion:</> ");
                 $suggestion = $fixer->suggestFix($violation);
                 if ($suggestion) {
+                    $violation->fixSuggestion = $suggestion;
                     $io->writeln("<fg=green>" . htmlspecialchars($suggestion) . "</>");
                 } else {
                     $io->writeln("<fg=red>Could not generate suggestion (check API key)</>");
