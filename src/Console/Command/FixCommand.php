@@ -79,9 +79,17 @@ class FixCommand extends Command
             }
 
             // Get AI Suggestion
-            $suggestion = $fixer->suggestFix($violation);
-            if (!$suggestion) {
-                $io->writeln("<fg=red>Skipped (AI could not generate fix)</>");
+            $rawSuggestion = $fixer->suggestFix($violation);
+            $suggestion = $rawSuggestion;
+            if ($rawSuggestion && str_contains($rawSuggestion, 'FIX:')) {
+                preg_match('/FIX:(.*)/s', $rawSuggestion, $matches);
+                $suggestion = trim($matches[1] ?? $rawSuggestion);
+                // Clean up potential markdown
+                $suggestion = preg_replace('/^```html\s*|\s*```$/i', '', $suggestion);
+            }
+
+            if (!$suggestion || ($suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:'))) {
+                $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
                 continue;
             }
 

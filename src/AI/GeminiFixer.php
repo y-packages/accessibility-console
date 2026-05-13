@@ -38,21 +38,15 @@ Error: {$violation->message}
 Severity: {$violation->severity->value}
 Standard: {$violation->standard->value}
 
-Please provide ONLY the fixed version of the HTML snippet. 
-Do not explain, do not add markdown code blocks, just return the corrected HTML.
-If the error is about missing 'alt' text, add a meaningful alt text based on context.
-If it's about ARIA roles, add the correct ones.
+Please provide a short explanation of the fix (in Turkish) and the fixed version of the HTML snippet.
+Use the following EXACT format:
+EXPLANATION: [A short explanation of what you fixed and why]
+FIX: [Only the corrected HTML snippet]
 PROMPT;
 
         try {
-            // Stable model: gemini-1.5-flash
-            $result = $this->client->generativeModel('gemini-1.5-flash')->generateContent($prompt);
-            $suggestion = trim($result->text());
-            
-            // Clean up if AI included markdown blocks anyway
-            $suggestion = preg_replace('/^```html\s*|\s*```$/i', '', $suggestion);
-            
-            return $suggestion;
+            $result = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
+            return trim($result->text());
         } catch (\Throwable $e) {
             return "AI Düzeltme Hatası: " . $e->getMessage();
         }

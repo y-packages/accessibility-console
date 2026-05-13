@@ -17,12 +17,29 @@ class HtmlDashboardReporter
         $rows = '';
         foreach ($violations as $v) {
             $severityClass = strtolower($v->severity->value);
+            $aiSuggestion = $v->fixSuggestion;
+            $explanation = '';
+            $fixedCode = '';
+
+            if ($aiSuggestion && str_contains($aiSuggestion, 'FIX:')) {
+                preg_match('/EXPLANATION:(.*)FIX:(.*)/s', $aiSuggestion, $matches);
+                $explanation = trim($matches[1] ?? '');
+                $fixedCode = trim($matches[2] ?? '');
+                // Clean up potential markdown
+                $fixedCode = preg_replace('/^```html\s*|\s*```$/i', '', $fixedCode);
+            } else {
+                $fixedCode = $aiSuggestion;
+            }
+
             $rows .= "
             <tr class='severity-{$severityClass}'>
                 <td><span class='badge'>{$v->ruleId}</span></td>
                 <td>{$v->message}</td>
                 <td><pre><code>" . htmlspecialchars($v->htmlSnippet) . "</code></pre></td>
-                <td>" . ($v->fixSuggestion ? "<pre class='ai-fix'><code>" . htmlspecialchars($v->fixSuggestion) . "</code></pre>" : "<span class='text-muted'>Manual fix required</span>") . "</td>
+                <td>
+                    " . ($explanation ? "<div class='ai-explanation'><strong>Öneri:</strong> {$explanation}</div>" : "") . "
+                    " . ($fixedCode ? "<pre class='ai-fix'><code>" . htmlspecialchars($fixedCode) . "</code></pre>" : "<span class='text-muted'>Manual fix required</span>") . "
+                </td>
                 <td>" . ($v->location ? "{$v->location['file']}:{$v->location['line']}" : 'N/A') . "</td>
             </tr>";
         }
@@ -44,7 +61,8 @@ class HtmlDashboardReporter
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
         th { background: #f8f9fa; }
         pre { background: #272822; color: #f8f8f2; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
-        .ai-fix { border-left: 4px solid #2ecc71; background: #1e1e1e; }
+        .ai-explanation { margin-bottom: 8px; font-size: 13px; color: #27ae60; line-height: 1.4; }
+        .ai-fix { border-left: 4px solid #2ecc71; background: #1e1e1e; margin-top: 5px; }
         .badge { background: #34495e; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; }
         .severity-error { background: #fff5f5; }
         .text-muted { color: #95a5a6; font-size: 0.9em; font-style: italic; }
