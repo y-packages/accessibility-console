@@ -16,6 +16,9 @@ class HeadingOrderRule extends AbstractRule
         
         $lastLevel = 0;
         foreach ($headings as $h) {
+            if (!$h instanceof \DOMElement) {
+                continue;
+            }
             $level = (int)substr($h->tagName, 1);
             if ($lastLevel > 0 && $level > $lastLevel + 1) {
                 $violations[] = $this->createViolation(

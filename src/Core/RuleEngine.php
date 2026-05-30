@@ -24,7 +24,8 @@ class RuleEngine
                 $reflection = new \ReflectionMethod($rule, 'check');
                 $params = $reflection->getParameters();
                 
-                if (isset($params[0]) && $params[0]->getType() && $params[0]->getType()->getName() === 'DOMDocument') {
+                $type = $params[0]->getType();
+                if (isset($params[0]) && $type instanceof \ReflectionNamedType && $type->getName() === 'DOMDocument') {
                     // Document-level rule (Core\AbstractRule style)
                     $violations = $rule->check($doc);
                     $allViolations = array_merge($allViolations, $violations);
