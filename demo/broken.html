@@ -4,7 +4,7 @@
     <title>Broken Page</title>
 </head>
 <body>
-    <h1>Welcome to a broken page</h1>
+    <h1 id="main-content">Welcome to a broken page</h1>
     
     <!-- Missing alt attribute -->
     <img src="logo.png">
@@ -15,6 +15,21 @@
     <!-- Empty button -->
     <button type="submit"></button>
     
+    <!-- Positive tabindex -->
+    <a href="/keyboard" tabindex="5">Keyboard test</a>
+
+    <!-- Duplicate ID -->
+    <div id="main-content">This is a duplicate main-content ID div!</div>
+
+    <!-- Low Contrast -->
+    <p style="color: #888888; background-color: #999999;">This text has extremely low contrast ratio!</p>
+
+    <!-- Invalid ARIA role and missing controls target -->
+    <div role="cool-widget" aria-controls="non-existent-popup">WAI-ARIA elements</div>
+
+    <!-- Missing Iframe Title -->
+    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
+
     <p>This page has multiple accessibility issues.</p>
 </body>
 </html>

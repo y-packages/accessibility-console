@@ -18,6 +18,11 @@ class StandardRuleSet
             new FieldsetLegend(),
             new HeadingOrder(),
             new MetaViewport(),
+            new TabindexOrder(),
+            new ColorContrast(),
+            new DuplicateId(),
+            new AriaRole(),
+            new IframeTitle(),
         ];
     }
 }
