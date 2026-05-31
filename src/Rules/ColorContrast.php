@@ -92,6 +92,9 @@ class ColorContrast extends AbstractRule
         return null;
     }
 
+    /**
+     * @return array{0: int, 1: int, 2: int}|null
+     */
     private function hexToRgb(string $hex): ?array
     {
         $hex = ltrim($hex, '#');

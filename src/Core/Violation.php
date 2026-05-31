@@ -4,6 +4,9 @@ namespace YakNet\AccessibilityConsole\Core;
 
 class Violation
 {
+    /**
+     * @param array{file: string, line: int}|null $location
+     */
     public function __construct(
         public string $ruleId,
         public string $message,
@@ -14,6 +17,9 @@ class Violation
         public ?string $fixSuggestion = null
     ) {}
 
+    /**
+     * @return array{ruleId: string, message: string, severity: string, standard: string, htmlSnippet: string, location: array{file: string, line: int}|null, fixSuggestion: string|null}
+     */
     public function toArray(): array
     {
         return [

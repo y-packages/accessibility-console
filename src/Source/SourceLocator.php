@@ -8,12 +8,16 @@ use SplFileInfo;
 
 class SourceLocator
 {
+    /** @var array<int, string> */
     private array $extensions = ['php', 'html', 'twig', 'blade.php'];
 
     public function __construct(
         private readonly string $searchPath
     ) {}
 
+    /**
+     * @return array{file: string, line: int}|null
+     */
     public function locate(string $snippet): ?array
     {
         if (!is_dir($this->searchPath) || !is_readable($this->searchPath)) {
@@ -76,6 +80,9 @@ class SourceLocator
         return false;
     }
 
+    /**
+     * @return array{type: string, score?: float, location?: array{file: string, line: int}}
+     */
     private function searchInFile(string $filepath, string $searchSnippet, string $fullSnippet): array
     {
         $content = file_get_contents($filepath);
@@ -118,6 +125,9 @@ class SourceLocator
         return ['type' => 'none'];
     }
 
+    /**
+     * @return array{tag: string|null, attributes: array<string, string>}
+     */
     private function parseSnippet(string $snippet): array
     {
         preg_match('/<([a-zA-Z0-9]+)/', $snippet, $matches);
@@ -133,6 +143,9 @@ class SourceLocator
         return ['tag' => $tagName, 'attributes' => $attributes];
     }
 
+    /**
+     * @param array{tag: string|null, attributes: array<string, string>} $parsed
+     */
     private function calculateFuzzyScore(string $line, array $parsed): float
     {
         if (!$parsed['tag'] || !str_contains(strtolower($line), '<' . strtolower($parsed['tag']))) {

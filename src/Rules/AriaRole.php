@@ -8,6 +8,7 @@ use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
 class AriaRole extends AbstractRule
 {
+    /** @var array<int, string> */
     private static array $validRoles = [
         'alert', 'alertdialog', 'application', 'article', 'banner', 'button', 'cell', 'checkbox',
         'columnheader', 'combobox', 'complementary', 'contentinfo', 'definition', 'dialog', 'directory',

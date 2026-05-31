@@ -16,7 +16,7 @@ use YakNet\AccessibilityConsole\Source\SourceLocator;
 
 class ScanCommand extends Command
 {
-    protected static $defaultName = 'scan';
+    protected static ?string $defaultName = 'scan';
 
     protected function configure(): void
     {

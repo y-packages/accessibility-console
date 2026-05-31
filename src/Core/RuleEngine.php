@@ -4,7 +4,7 @@ namespace YakNet\AccessibilityConsole\Core;
 
 class RuleEngine
 {
-    /** @var array */
+    /** @var array<int, mixed> */
     private array $rules = [];
 
     public function addRule(mixed $rule): void
