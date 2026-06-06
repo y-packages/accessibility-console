@@ -28,6 +28,7 @@ class StandardRuleSet
             new PlaceholderAsLabel(),
             new ImageAltRedundant(),
             new AriaHiddenFocusable(),
+            new PageTitle(),
         ];
         return $rules;
     }
