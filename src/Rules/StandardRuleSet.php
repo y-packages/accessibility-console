@@ -24,6 +24,10 @@ class StandardRuleSet
             new DuplicateId(),
             new AriaRole(),
             new IframeTitle(),
+            new LinkTextGeneric(),
+            new PlaceholderAsLabel(),
+            new ImageAltRedundant(),
+            new AriaHiddenFocusable(),
         ];
         return $rules;
     }

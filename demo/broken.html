@@ -30,6 +30,25 @@
     <!-- Missing Iframe Title -->
     <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
 
+    <!-- New WCAG Rule Violations for testing -->
+    
+    <!-- LinkTextGeneric: Generic text without context -->
+    <a href="/read-more">Click here</a>
+    <a href="/devam-oku">devamını oku</a>
+    
+    <!-- PlaceholderAsLabel: Input relying only on placeholder -->
+    <input type="text" placeholder="Search website...">
+
+    <!-- ImageAltRedundant: Redundant words in alt text -->
+    <img src="logo2.png" alt="logo of our company">
+    <img src="profile.jpg" alt="profile photo of john doe">
+
+    <!-- AriaHiddenFocusable: Focusable element hidden with aria-hidden="true" -->
+    <div aria-hidden="true">
+        <button type="button">Hidden click</button>
+    </div>
+    <a href="#" aria-hidden="true">Hidden link</a>
+
     <p>This page has multiple accessibility issues.</p>
 </body>
 </html>

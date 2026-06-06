@@ -34,7 +34,17 @@ class SourceLocator
 
         try {
             $directory = new RecursiveDirectoryIterator($this->searchPath, \FilesystemIterator::SKIP_DOTS);
-            $iterator = new RecursiveIteratorIterator($directory, RecursiveIteratorIterator::SELF_FIRST);
+            $filter = new \RecursiveCallbackFilterIterator($directory, function ($current) {
+                /** @var SplFileInfo $current */
+                if ($current->isDir()) {
+                    $filename = $current->getFilename();
+                    if ($filename === 'vendor' || $filename === '.git' || $filename === 'node_modules') {
+                        return false;
+                    }
+                }
+                return true;
+            });
+            $iterator = new RecursiveIteratorIterator($filter, RecursiveIteratorIterator::SELF_FIRST);
         } catch (\UnexpectedValueException) {
             return null;
         }
