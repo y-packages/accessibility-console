@@ -13,6 +13,9 @@ class DuplicateId extends AbstractRule
         $violations = [];
         $xpath = new \DOMXPath($doc);
         $elements = $xpath->query('//*[@id]');
+        if ($elements === false) {
+            return [];
+        }
         
         $ids = [];
         foreach ($elements as $el) {

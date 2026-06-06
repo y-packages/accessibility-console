@@ -33,14 +33,22 @@ class ScanCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $target = $input->getArgument('target');
-        $enableAi = $input->getOption('ai');
-        $projectPath = $input->getOption('project-path') ?? getcwd();
+        if (!is_string($target)) {
+            $io->error("Target must be a string URL or file path.");
+            return Command::FAILURE;
+        }
+        $enableAi = (bool)$input->getOption('ai');
+        $projectPathOption = $input->getOption('project-path');
+        $projectPath = is_string($projectPathOption) ? $projectPathOption : getcwd();
+        if ($projectPath === false) {
+            $projectPath = '.';
+        }
 
         $io->title("Accessibility Console - Scanning: $target");
 
         // 1. Fetch HTML
         $html = @file_get_contents($target);
-        if (!$html) {
+        if ($html === false || $html === '') {
             $io->error("Could not read target: $target");
             return Command::FAILURE;
         }
@@ -97,7 +105,7 @@ class ScanCommand extends Command
 
         // Export Report
         $reportPath = $input->getOption('report');
-        if ($reportPath) {
+        if (is_string($reportPath) && $reportPath !== '') {
             $extension = pathinfo($reportPath, PATHINFO_EXTENSION);
             if ($extension === 'json') {
                 $data = array_map(fn($v) => $v->toArray(), $violations);

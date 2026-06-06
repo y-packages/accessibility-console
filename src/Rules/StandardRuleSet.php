@@ -9,7 +9,8 @@ class StandardRuleSet
      */
     public static function all(): array
     {
-        return [
+        /** @var RuleInterface[] $rules */
+        $rules = [
             new HtmlHasLang(),
             new ImgAltText(),
             new EmptyLink(),
@@ -24,5 +25,6 @@ class StandardRuleSet
             new AriaRole(),
             new IframeTitle(),
         ];
+        return $rules;
     }
 }

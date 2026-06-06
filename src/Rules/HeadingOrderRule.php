@@ -13,6 +13,9 @@ class HeadingOrderRule extends AbstractRule
         $violations = [];
         $xpath = new \DOMXPath($doc);
         $headings = $xpath->query('//h1|//h2|//h3|//h4|//h5|//h6');
+        if ($headings === false) {
+            return [];
+        }
         
         $lastLevel = 0;
         foreach ($headings as $h) {

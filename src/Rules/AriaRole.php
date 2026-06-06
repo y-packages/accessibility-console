@@ -28,43 +28,47 @@ class AriaRole extends AbstractRule
         
         // 1. Check WAI-ARIA Role Validity
         $roleElements = $xpath->query('//*[@role]');
-        foreach ($roleElements as $el) {
-            if (!$el instanceof \DOMElement) {
-                continue;
-            }
-            $role = trim($el->getAttribute('role'));
-            if ($role === '') {
-                continue;
-            }
-            $roles = array_filter(explode(' ', $role));
-            foreach ($roles as $r) {
-                if (!in_array(strtolower($r), self::$validRoles, true)) {
-                    $violations[] = $this->createViolation(
-                        "Invalid ARIA role \"{$r}\" declared on element. Must use standard WAI-ARIA roles.",
-                        $el
-                    );
+        if ($roleElements !== false) {
+            foreach ($roleElements as $el) {
+                if (!$el instanceof \DOMElement) {
+                    continue;
+                }
+                $role = trim($el->getAttribute('role'));
+                if ($role === '') {
+                    continue;
+                }
+                $roles = array_filter(explode(' ', $role));
+                foreach ($roles as $r) {
+                    if (!in_array(strtolower($r), self::$validRoles, true)) {
+                        $violations[] = $this->createViolation(
+                            "Invalid ARIA role \"{$r}\" declared on element. Must use standard WAI-ARIA roles.",
+                            $el
+                        );
+                    }
                 }
             }
         }
 
         // 2. Check aria-controls Targets Existence
         $controlsElements = $xpath->query('//*[@aria-controls]');
-        foreach ($controlsElements as $el) {
-            if (!$el instanceof \DOMElement) {
-                continue;
-            }
-            $targetsStr = trim($el->getAttribute('aria-controls'));
-            if ($targetsStr === '') {
-                continue;
-            }
-            $targets = array_filter(explode(' ', $targetsStr));
-            foreach ($targets as $targetId) {
-                $targetQuery = $xpath->query('//*[@id="' . $targetId . '"]');
-                if ($targetQuery->length === 0) {
-                    $violations[] = $this->createViolation(
-                        "Attribute aria-controls=\"{$targetId}\" targets an element that does not exist in the document.",
-                        $el
-                    );
+        if ($controlsElements !== false) {
+            foreach ($controlsElements as $el) {
+                if (!$el instanceof \DOMElement) {
+                    continue;
+                }
+                $targetsStr = trim($el->getAttribute('aria-controls'));
+                if ($targetsStr === '') {
+                    continue;
+                }
+                $targets = array_filter(explode(' ', $targetsStr));
+                foreach ($targets as $targetId) {
+                    $targetQuery = $xpath->query('//*[@id="' . $targetId . '"]');
+                    if ($targetQuery !== false && $targetQuery->length === 0) {
+                        $violations[] = $this->createViolation(
+                            "Attribute aria-controls=\"{$targetId}\" targets an element that does not exist in the document.",
+                            $el
+                        );
+                    }
                 }
             }
         }

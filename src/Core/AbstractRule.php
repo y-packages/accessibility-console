@@ -21,12 +21,21 @@ abstract class AbstractRule
 
     protected function createViolation(string $message, \DOMElement $element): Violation
     {
+        $doc = $element->ownerDocument;
+        $html = '';
+        if ($doc !== null) {
+            $htmlVal = $doc->saveHTML($element);
+            if (is_string($htmlVal)) {
+                $html = $htmlVal;
+            }
+        }
+
         return new Violation(
             ruleId: (new \ReflectionClass($this))->getShortName(),
             message: $message,
             severity: $this->getSeverity(),
             standard: $this->getStandard(),
-            htmlSnippet: $element->ownerDocument->saveHTML($element)
+            htmlSnippet: $html
         );
     }
 }

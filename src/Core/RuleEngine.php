@@ -19,25 +19,21 @@ class RuleEngine
     {
         $allViolations = [];
         foreach ($this->rules as $rule) {
-            if (method_exists($rule, 'check')) {
-                // Determine if it's a document-level rule or element-level rule
-                $reflection = new \ReflectionMethod($rule, 'check');
-                $params = $reflection->getParameters();
-                
-                $type = $params[0]->getType();
-                if (isset($params[0]) && $type instanceof \ReflectionNamedType && $type->getName() === 'DOMDocument') {
-                    // Document-level rule (Core\AbstractRule style)
-                    $violations = $rule->check($doc);
-                    $allViolations = array_merge($allViolations, $violations);
-                } else {
-                    // Element-level rule (Rules\RuleInterface style)
-                    // We need to iterate over all elements
-                    $xpath = new \DOMXPath($doc);
-                    $elements = $xpath->query('//*');
+            if ($rule instanceof AbstractRule) {
+                // Document-level rule (Core\AbstractRule style)
+                $violations = $rule->check($doc);
+                $allViolations = array_merge($allViolations, $violations);
+            } elseif ($rule instanceof \YakNet\AccessibilityConsole\Rules\RuleInterface) {
+                // Element-level rule (Rules\RuleInterface style)
+                $xpath = new \DOMXPath($doc);
+                $elements = $xpath->query('//*');
+                if ($elements !== false) {
                     foreach ($elements as $element) {
-                        $violation = $rule->check($element);
-                        if ($violation) {
-                            $allViolations[] = $violation;
+                        if ($element instanceof \DOMElement) {
+                            $violation = $rule->check($element);
+                            if ($violation) {
+                                $allViolations[] = $violation;
+                            }
                         }
                     }
                 }

@@ -16,12 +16,21 @@ abstract class AbstractRule implements RuleInterface
 
     protected function createViolation(DOMElement $element, string $message, ?string $suggestion = null): Violation
     {
+        $doc = $element->ownerDocument;
+        $html = '';
+        if ($doc !== null) {
+            $htmlVal = $doc->saveHTML($element);
+            if (is_string($htmlVal)) {
+                $html = $htmlVal;
+            }
+        }
+
         return new Violation(
             ruleId: $this->getId(),
             message: $message,
             severity: $this->getSeverity(),
             standard: $this->getStandard(),
-            htmlSnippet: $element->ownerDocument->saveHTML($element),
+            htmlSnippet: $html,
             fixSuggestion: $suggestion
         );
     }

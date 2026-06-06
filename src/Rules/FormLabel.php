@@ -29,10 +29,13 @@ class FormLabel extends AbstractRule
 
         if ($element->hasAttribute('id')) {
             $id = $element->getAttribute('id');
-            $xpath = new \DOMXPath($element->ownerDocument);
-            $labels = $xpath->query("//label[@for='$id']");
-            if ($labels->length > 0) {
-                return null;
+            $doc = $element->ownerDocument;
+            if ($doc !== null) {
+                $xpath = new \DOMXPath($doc);
+                $labels = $xpath->query("//label[@for='$id']");
+                if ($labels !== false && $labels->length > 0) {
+                    return null;
+                }
             }
         }
 

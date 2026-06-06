@@ -30,8 +30,16 @@ class FixCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $target = $input->getArgument('target');
-        $projectPath = $input->getOption('project-path') ?? getcwd();
-        $dryRun = $input->getOption('dry-run');
+        if (!is_string($target)) {
+            $io->error("Target must be a string URL or file path.");
+            return Command::FAILURE;
+        }
+        $projectPathOption = $input->getOption('project-path');
+        $projectPath = is_string($projectPathOption) ? $projectPathOption : getcwd();
+        if ($projectPath === false) {
+            $projectPath = '.';
+        }
+        $dryRun = (bool)$input->getOption('dry-run');
 
         $config = new Config();
         $apiKey = $config->getGeminiApiKey();
@@ -45,7 +53,7 @@ class FixCommand extends Command
 
         // 1. Fetch HTML
         $html = @file_get_contents($target);
-        if (!$html) {
+        if ($html === false || $html === '') {
             $io->error("Could not read target: $target");
             return Command::FAILURE;
         }

@@ -4,11 +4,11 @@ namespace YakNet\AccessibilityConsole\Core;
 
 class Scanner
 {
-    public function __construct(private ?RuleEngine $engine = null)
+    private RuleEngine $engine;
+
+    public function __construct(?RuleEngine $engine = null)
     {
-        if ($this->engine === null) {
-            $this->engine = new RuleEngine();
-        }
+        $this->engine = $engine ?? new RuleEngine();
     }
 
     public function addRule(mixed $rule): void

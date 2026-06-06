@@ -24,7 +24,8 @@ class SourceLocator
             return null;
         }
 
-        $cleanSnippet = trim(preg_replace('/\s+/', ' ', $snippet));
+        $replaced = preg_replace('/\s+/', ' ', $snippet);
+        $cleanSnippet = is_string($replaced) ? trim($replaced) : '';
         if ($cleanSnippet === '') {
             return null;
         }
@@ -81,7 +82,7 @@ class SourceLocator
     }
 
     /**
-     * @return array{type: string, score?: float, location?: array{file: string, line: int}}
+     * @return array{type: 'exact', location: array{file: string, line: int}}|array{type: 'fuzzy', score: float, location: array{file: string, line: int}}|array{type: 'none'}
      */
     private function searchInFile(string $filepath, string $searchSnippet, string $fullSnippet): array
     {
@@ -98,7 +99,8 @@ class SourceLocator
 
         foreach ($lines as $index => $line) {
             $lineNumber = $index + 1;
-            $cleanLine = trim(preg_replace('/\s+/', ' ', $line));
+            $replacedLine = preg_replace('/\s+/', ' ', $line);
+            $cleanLine = is_string($replacedLine) ? trim($replacedLine) : '';
 
             if (str_contains($cleanLine, $searchSnippet)) {
                 return [
