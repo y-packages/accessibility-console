@@ -28,9 +28,10 @@ class Scanner
             return [];
         }
 
-        $doc = new \DOMDocument();
-        // Suppress warnings for malformed HTML
-        @$doc->loadHTML('<?xml encoding="utf-8" ?>' . $html, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $html5 = new \Masterminds\HTML5([
+            'disable_html_ns' => true,
+        ]);
+        $doc = $html5->loadHTML($html);
 
         return $this->engine->run($doc);
     }

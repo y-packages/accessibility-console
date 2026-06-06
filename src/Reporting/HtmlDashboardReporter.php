@@ -7,14 +7,14 @@ use YakNet\AccessibilityConsole\Core\Violation;
 class HtmlDashboardReporter
 {
     /**
-     * @param Violation[] $violations
+     * @param array<string, Violation[]> $results
      */
-    public function render(array $violations, string $target): string
+    public function render(array $results, string $target): string
     {
-        $count = count($violations);
+        $totalPages = count($results);
         $date = date('Y-m-d H:i:s');
 
-        // Calculate severity and standard counts
+        // Calculate severity, standard counts and overall average score
         $criticalCount = 0;
         $errorCount = 0;
         $warningCount = 0;
@@ -24,110 +24,145 @@ class HtmlDashboardReporter
         $standardAA = 0;
         $standardAAA = 0;
 
-        foreach ($violations as $v) {
-            switch ($v->severity) {
-                case \YakNet\AccessibilityConsole\Core\Severity::CRITICAL:
-                    $criticalCount++;
-                    break;
-                case \YakNet\AccessibilityConsole\Core\Severity::ERROR:
-                    $errorCount++;
-                    break;
-                case \YakNet\AccessibilityConsole\Core\Severity::WARNING:
-                    $warningCount++;
-                    break;
-                case \YakNet\AccessibilityConsole\Core\Severity::INFO:
-                    $infoCount++;
-                    break;
+        $pageScores = [];
+        $totalViolations = 0;
+
+        foreach ($results as $url => $violations) {
+            $totalViolations += count($violations);
+            $pageCrit = 0;
+            $pageErr = 0;
+            $pageWarn = 0;
+            $pageInfo = 0;
+
+            foreach ($violations as $v) {
+                switch ($v->severity) {
+                    case \YakNet\AccessibilityConsole\Core\Severity::CRITICAL:
+                        $criticalCount++;
+                        $pageCrit++;
+                        break;
+                    case \YakNet\AccessibilityConsole\Core\Severity::ERROR:
+                        $errorCount++;
+                        $pageErr++;
+                        break;
+                    case \YakNet\AccessibilityConsole\Core\Severity::WARNING:
+                        $warningCount++;
+                        $pageWarn++;
+                        break;
+                    case \YakNet\AccessibilityConsole\Core\Severity::INFO:
+                        $infoCount++;
+                        $pageInfo++;
+                        break;
+                }
+
+                switch ($v->standard) {
+                    case \YakNet\AccessibilityConsole\Core\WCAGStandard::A:
+                        $standardA++;
+                        break;
+                    case \YakNet\AccessibilityConsole\Core\WCAGStandard::AA:
+                        $standardAA++;
+                        break;
+                    case \YakNet\AccessibilityConsole\Core\WCAGStandard::AAA:
+                        $standardAAA++;
+                        break;
+                }
             }
 
-            switch ($v->standard) {
-                case \YakNet\AccessibilityConsole\Core\WCAGStandard::A:
-                    $standardA++;
-                    break;
-                case \YakNet\AccessibilityConsole\Core\WCAGStandard::AA:
-                    $standardAA++;
-                    break;
-                case \YakNet\AccessibilityConsole\Core\WCAGStandard::AAA:
-                    $standardAAA++;
-                    break;
-            }
+            $deductions = ($pageCrit * 15) + ($pageErr * 10) + ($pageWarn * 4) + ($pageInfo * 1);
+            $pageScores[$url] = max(0, min(100, 100 - $deductions));
         }
 
-        // Calculate health score (0-100)
-        $deductions = ($criticalCount * 15) + ($errorCount * 10) + ($warningCount * 4) + ($infoCount * 1);
-        $score = max(0, min(100, 100 - $deductions));
+        $averageScore = $totalPages > 0 ? (int)round(array_sum($pageScores) / $totalPages) : 100;
+
+        // Generate Page Selector options
+        $pageOptions = "<option value=\"all\">Tüm Sayfalar ({$totalPages} sayfa, {$totalViolations} ihlal)</option>";
+        foreach ($results as $url => $violations) {
+            $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            $vCount = count($violations);
+            $pageOptions .= "<option value=\"{$escapedUrl}\">{$escapedUrl} ({$vCount} ihlal)</option>";
+        }
 
         $cards = '';
-        foreach ($violations as $index => $v) {
-            $severityClass = strtolower($v->severity->value);
-            $standardVal = $v->standard->value;
-            $aiSuggestion = $v->fixSuggestion;
-            $explanation = '';
-            $fixedCode = '';
+        $cardIndex = 0;
+        foreach ($results as $url => $violations) {
+            $escapedUrl = htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
+            foreach ($violations as $v) {
+                $severityClass = strtolower($v->severity->value);
+                $standardVal = $v->standard->value;
+                $aiSuggestion = $v->fixSuggestion;
+                $explanation = '';
+                $fixedCode = '';
 
-            if ($aiSuggestion && str_contains($aiSuggestion, 'FIX:')) {
-                preg_match('/EXPLANATION:(.*)FIX:(.*)/s', $aiSuggestion, $matches);
-                $explanation = trim($matches[1] ?? '');
-                $fixedCode = trim($matches[2] ?? '');
-                $fixedCode = preg_replace('/^```html\s*|\s*```$/i', '', $fixedCode);
-            } else {
-                $fixedCode = $aiSuggestion;
+                if ($aiSuggestion && str_contains($aiSuggestion, 'FIX:')) {
+                    preg_match('/EXPLANATION:(.*)FIX:(.*)/s', $aiSuggestion, $matches);
+                    $explanation = trim($matches[1] ?? '');
+                    $fixedCode = trim($matches[2] ?? '');
+                    $fixedCode = preg_replace('/^```html\s*|\s*```$/i', '', $fixedCode);
+                } else {
+                    $fixedCode = $aiSuggestion;
+                }
+
+                $escapedSnippet = htmlspecialchars($v->htmlSnippet, ENT_QUOTES, 'UTF-8');
+                $escapedFixed = $fixedCode ? htmlspecialchars($fixedCode, ENT_QUOTES, 'UTF-8') : '';
+                $escapedExplanation = $explanation ? htmlspecialchars($explanation, ENT_QUOTES, 'UTF-8') : '';
+                $locationStr = $v->location ? htmlspecialchars($v->location['file'] . ':' . $v->location['line'], ENT_QUOTES, 'UTF-8') : 'N/A';
+                $escapedRuleId = htmlspecialchars($v->ruleId, ENT_QUOTES, 'UTF-8');
+                $escapedMessage = htmlspecialchars($v->message, ENT_QUOTES, 'UTF-8');
+
+                $hasAiFix = !empty($fixedCode);
+                $aiTabButton = $hasAiFix ? "<button class=\"tab-btn\" id=\"tab-ai-{$cardIndex}\" role=\"tab\" aria-selected=\"false\" aria-controls=\"panel-ai-{$cardIndex}\" tabindex=\"-1\">Yapay Zeka Önerisi</button>" : "";
+                $aiTabPanel = $hasAiFix ? "
+                <div class=\"tab-panel\" id=\"panel-ai-{$cardIndex}\" role=\"tabpanel\" aria-labelledby=\"tab-ai-{$cardIndex}\" hidden>
+                    <div class=\"ai-recommendation\">
+                        " . ($escapedExplanation ? "<div class=\"ai-explanation\"><strong>Öneri Açıklaması:</strong> {$escapedExplanation}</div>" : "") . "
+                        <div class=\"code-wrapper\">
+                            <pre><code id=\"code-ai-{$cardIndex}\">{$escapedFixed}</code></pre>
+                            <button class=\"copy-btn\" aria-label=\"{$escapedRuleId} kuralı için önerilen düzeltmeyi kopyala\" onclick=\"copyCode('#code-ai-{$cardIndex}', this)\">
+                                <svg class=\"icon-copy\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\" ry=\"2\"></rect><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"></path></svg>
+                                <span>Kopyala</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>" : "";
+
+                $cards .= "
+                <div class=\"violation-card\" data-severity=\"{$severityClass}\" data-standard=\"{$standardVal}\" data-rule=\"{$escapedRuleId}\" data-message=\"{$escapedMessage}\" data-page=\"{$escapedUrl}\">
+                    <div class=\"card-header\">
+                        <div class=\"badge-row\">
+                            <span class=\"badge rule-badge\">{$escapedRuleId}</span>
+                            <span class=\"badge standard-badge\">WCAG {$standardVal}</span>
+                            <span class=\"badge severity-badge severity-{$severityClass}\">
+                                <span class=\"dot\"></span>
+                                " . ucfirst($severityClass) . "
+                            </span>
+                        </div>
+                        <div class=\"location-row\">
+                            <svg class=\"icon-location\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z\"></path><circle cx=\"12\" cy=\"10\" r=\"3\"></circle></svg>
+                            <span>{$locationStr}</span>
+                        </div>
+                    </div>
+                    <div class=\"card-body\">
+                        <h3 class=\"violation-msg\">{$escapedMessage}</h3>
+                        
+                        <div class=\"code-viewer\">
+                            <div class=\"tab-list\" role=\"tablist\">
+                                <button class=\"tab-btn active\" id=\"tab-orig-{$cardIndex}\" role=\"tab\" aria-selected=\"true\" aria-controls=\"panel-orig-{$cardIndex}\">Mevcut Kod</button>
+                                {$aiTabButton}
+                            </div>
+                            <div class=\"tab-panel active\" id=\"panel-orig-{$cardIndex}\" role=\"tabpanel\" aria-labelledby=\"tab-orig-{$cardIndex}\">
+                                <pre><code>{$escapedSnippet}</code></pre>
+                            </div>
+                            {$aiTabPanel}
+                        </div>
+
+                        <div class=\"page-meta-row\" style=\"margin-top: 12px; font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px;\">
+                            <svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" style=\"width:14px;height:14px;color:var(--text-muted);\"><path d=\"M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71\"></path><path d=\"M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71\"></path></svg>
+                            <span>Kaynak Sayfa: <strong style=\"word-break: break-all;\">{$escapedUrl}</strong></span>
+                        </div>
+                    </div>
+                </div>";
+
+                $cardIndex++;
             }
-
-            $escapedSnippet = htmlspecialchars($v->htmlSnippet, ENT_QUOTES, 'UTF-8');
-            $escapedFixed = $fixedCode ? htmlspecialchars($fixedCode, ENT_QUOTES, 'UTF-8') : '';
-            $escapedExplanation = $explanation ? htmlspecialchars($explanation, ENT_QUOTES, 'UTF-8') : '';
-            $locationStr = $v->location ? htmlspecialchars($v->location['file'] . ':' . $v->location['line'], ENT_QUOTES, 'UTF-8') : 'N/A';
-            $escapedRuleId = htmlspecialchars($v->ruleId, ENT_QUOTES, 'UTF-8');
-            $escapedMessage = htmlspecialchars($v->message, ENT_QUOTES, 'UTF-8');
-
-            $hasAiFix = !empty($fixedCode);
-            $aiTabButton = $hasAiFix ? "<button class=\"tab-btn\" id=\"tab-ai-{$index}\" role=\"tab\" aria-selected=\"false\" aria-controls=\"panel-ai-{$index}\" tabindex=\"-1\">Yapay Zeka Önerisi</button>" : "";
-            $aiTabPanel = $hasAiFix ? "
-            <div class=\"tab-panel\" id=\"panel-ai-{$index}\" role=\"tabpanel\" aria-labelledby=\"tab-ai-{$index}\" hidden>
-                <div class=\"ai-recommendation\">
-                    " . ($escapedExplanation ? "<div class=\"ai-explanation\"><strong>Öneri Açıklaması:</strong> {$escapedExplanation}</div>" : "") . "
-                    <div class=\"code-wrapper\">
-                        <pre><code id=\"code-ai-{$index}\">{$escapedFixed}</code></pre>
-                        <button class=\"copy-btn\" aria-label=\"{$escapedRuleId} kuralı için önerilen düzeltmeyi kopyala\" onclick=\"copyCode('#code-ai-{$index}', this)\">
-                            <svg class=\"icon-copy\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\" ry=\"2\"></rect><path d=\"M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1\"></path></svg>
-                            <span>Kopyala</span>
-                        </button>
-                    </div>
-                </div>
-            </div>" : "";
-
-            $cards .= "
-            <div class=\"violation-card\" data-severity=\"{$severityClass}\" data-standard=\"{$standardVal}\" data-rule=\"{$escapedRuleId}\" data-message=\"{$escapedMessage}\">
-                <div class=\"card-header\">
-                    <div class=\"badge-row\">
-                        <span class=\"badge rule-badge\">{$escapedRuleId}</span>
-                        <span class=\"badge standard-badge\">WCAG {$standardVal}</span>
-                        <span class=\"badge severity-badge severity-{$severityClass}\">
-                            <span class=\"dot\"></span>
-                            " . ucfirst($severityClass) . "
-                        </span>
-                    </div>
-                    <div class=\"location-row\">
-                        <svg class=\"icon-location\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z\"></path><circle cx=\"12\" cy=\"10\" r=\"3\"></circle></svg>
-                        <span>{$locationStr}</span>
-                    </div>
-                </div>
-                <div class=\"card-body\">
-                    <h3 class=\"violation-msg\">{$escapedMessage}</h3>
-                    
-                    <div class=\"code-viewer\">
-                        <div class=\"tab-list\" role=\"tablist\">
-                            <button class=\"tab-btn active\" id=\"tab-orig-{$index}\" role=\"tab\" aria-selected=\"true\" aria-controls=\"panel-orig-{$index}\">Mevcut Kod</button>
-                            {$aiTabButton}
-                        </div>
-                        <div class=\"tab-panel active\" id=\"panel-orig-{$index}\" role=\"tabpanel\" aria-labelledby=\"tab-orig-{$index}\">
-                            <pre><code>{$escapedSnippet}</code></pre>
-                        </div>
-                        {$aiTabPanel}
-                    </div>
-                </div>
-            </div>";
         }
 
         return <<<HTML
@@ -378,7 +413,7 @@ class HtmlDashboardReporter
             stroke-width: 8;
             stroke-linecap: round;
             stroke-dasharray: 251.2;
-            stroke-dashoffset: calc(251.2 - (251.2 * {$score}) / 100);
+            stroke-dashoffset: calc(251.2 - (251.2 * {$averageScore}) / 100);
             transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
@@ -466,7 +501,7 @@ class HtmlDashboardReporter
 
         .search-group {
             position: relative;
-            flex: 1;
+            flex: 2;
             min-width: 250px;
         }
 
@@ -504,6 +539,35 @@ class HtmlDashboardReporter
         }
         body.light-theme .search-input:focus {
             background: #fff;
+        }
+
+        .page-select-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .select-input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-card);
+            border-radius: 10px;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-secondary);
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        body.light-theme .select-input {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        body.light-theme .select-input option {
+            background-color: white;
+            color: #111827;
+        }
+        body.light-theme .select-input:focus {
+            background-color: white;
         }
 
         .filter-group {
@@ -820,7 +884,7 @@ class HtmlDashboardReporter
                 </div>
             </div>
             <div class="header-meta">
-                <div class="meta-tag" title="{$target}">Hedef: {$target}</div>
+                <div class="meta-tag" title="{$target}">Hedef Site: {$target}</div>
                 <div class="meta-tag">Tarih: {$date}</div>
                 <button id="theme-toggle" class="theme-btn" aria-label="Açık/Karanlık tema değiştir" onclick="toggleTheme()">
                     <!-- Moon icon -->
@@ -838,13 +902,13 @@ class HtmlDashboardReporter
                 <div class="gauge-container">
                     <svg viewBox="0 0 100 100" class="gauge">
                         <circle cx="50" cy="50" r="40" class="gauge-bg"></circle>
-                        <circle cx="50" cy="50" r="40" class="gauge-val " id="score-gauge" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
+                        <circle cx="50" cy="50" r="40" class="gauge-val" id="score-gauge" stroke-dasharray="251.2" stroke-dashoffset="251.2"></circle>
                     </svg>
                     <div class="gauge-label" id="score-val">0</div>
                 </div>
                 <div class="metric-desc">
-                    <h2>Erişilebilirlik Skoru</h2>
-                    <p>Sayfanın genel standartlara uygunluk derecesi.</p>
+                    <h2>Ortalama Sağlık Skoru</h2>
+                    <p>Tarama yapılan sayfaların ortalama puanı.</p>
                 </div>
             </div>
 
@@ -882,20 +946,16 @@ class HtmlDashboardReporter
             <div class="glass-panel">
                 <div class="summary-stats">
                     <div class="stat-item">
-                        <span class="stat-label">WCAG A</span>
-                        <span class="stat-val">{$standardA}</span>
+                        <span class="stat-label">Taranan Sayfa</span>
+                        <span class="stat-val">{$totalPages}</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">WCAG AA</span>
-                        <span class="stat-val">{$standardAA}</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">WCAG AAA</span>
-                        <span class="stat-val">{$standardAAA}</span>
+                        <span class="stat-label">WCAG A / AA / AAA</span>
+                        <span class="stat-val">{$standardA} / {$standardAA} / {$standardAAA}</span>
                     </div>
                     <div class="stat-item">
                         <span class="stat-label">Toplam İhlal</span>
-                        <span class="stat-val">{$count}</span>
+                        <span class="stat-val">{$totalViolations}</span>
                     </div>
                 </div>
             </div>
@@ -908,6 +968,12 @@ class HtmlDashboardReporter
                     <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                 </svg>
                 <input type="search" id="search-box" class="search-input" placeholder="Kural veya hata açıklaması ara..." aria-label="Kural veya hata açıklaması ara" oninput="applyFilters()">
+            </div>
+
+            <div class="page-select-group">
+                <select id="page-select" class="select-input" aria-label="Taranan sayfaya göre filtrele" onchange="applyFilters()">
+                    {$pageOptions}
+                </select>
             </div>
             
             <div class="filter-group">
@@ -946,7 +1012,7 @@ class HtmlDashboardReporter
     <!-- JavaScript Logic -->
     <script>
         // Apply Circular Score Gauge Color and Animation
-        const score = {$score};
+        const score = {$averageScore};
         const gauge = document.getElementById('score-gauge');
         const scoreText = document.getElementById('score-val');
         
@@ -1143,6 +1209,7 @@ class HtmlDashboardReporter
 
         function applyFilters() {
             const searchVal = document.getElementById('search-box').value.toLowerCase();
+            const pageVal = document.getElementById('page-select').value;
             const cards = document.querySelectorAll('.violation-card');
             let visibleCount = 0;
 
@@ -1150,11 +1217,13 @@ class HtmlDashboardReporter
                 const severity = card.getAttribute('data-severity');
                 const rule = card.getAttribute('data-rule').toLowerCase();
                 const message = card.getAttribute('data-message').toLowerCase();
+                const page = card.getAttribute('data-page');
 
                 const matchesSeverity = (activeSeverity === 'all' || severity === activeSeverity);
                 const matchesSearch = (!searchVal || rule.includes(searchVal) || message.includes(searchVal));
+                const matchesPage = (pageVal === 'all' || page === pageVal);
 
-                if (matchesSeverity && matchesSearch) {
+                if (matchesSeverity && matchesSearch && matchesPage) {
                     card.style.display = '';
                     visibleCount++;
                 } else {

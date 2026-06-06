@@ -1,19 +1,11 @@
 <?php
 
-// 1. Setup Autoloading (Mocking Composer)
-require_once __DIR__ . '/../src/Scanner.php';
-require_once __DIR__ . '/../src/Violation.php';
-require_once __DIR__ . '/../src/SourceLocator.php';
-require_once __DIR__ . '/../src/Reporter/HtmlReporter.php';
-require_once __DIR__ . '/../src/Rule/RuleInterface.php';
-require_once __DIR__ . '/../src/Rules/ImgAltText.php';
-require_once __DIR__ . '/../src/Rules/FormLabel.php';
-require_once __DIR__ . '/../src/Rules/HtmlHasLang.php';
-require_once __DIR__ . '/../src/Rules/EmptyLink.php';
+// 1. Setup Autoloading
+require_once __DIR__ . '/../vendor/autoload.php';
 
-use YakNet\AccessibilityConsole\Scanner;
-use YakNet\AccessibilityConsole\SourceLocator;
-use YakNet\AccessibilityConsole\Reporter\HtmlReporter;
+use YakNet\AccessibilityConsole\Core\Scanner;
+use YakNet\AccessibilityConsole\Source\SourceLocator;
+use YakNet\AccessibilityConsole\Reporting\HtmlDashboardReporter;
 use YakNet\AccessibilityConsole\Rules\ImgAltText;
 use YakNet\AccessibilityConsole\Rules\FormLabel;
 
@@ -48,19 +40,18 @@ $violations = $scanner->scan($html);
 
 if (!empty($violations)) {
     // Locate Sources
-    // We point it to the 'views' directory so it knows where to look for the error source
     $locator = new SourceLocator(__DIR__ . '/views');
 
     foreach ($violations as $violation) {
-        $location = $locator->locate($violation->snippet);
+        $location = $locator->locate($violation->htmlSnippet);
         if ($location) {
-            $violation->setSourceLocation($location['file'], $location['line']);
+            $violation->location = $location;
         }
     }
 
-    // Render Report
-    $reporter = new HtmlReporter();
-    $reportHtml = $reporter->render($violations);
+    // Render Report (Format as results mapped by page URL)
+    $reporter = new HtmlDashboardReporter();
+    $reportHtml = $reporter->render(['http://localhost:8080/index.php' => $violations], 'demo/index.php');
 
     // Inject into body
     $html = str_replace('</body>', $reportHtml . '</body>', $html);
