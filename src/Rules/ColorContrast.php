@@ -13,6 +13,7 @@ class ColorContrast extends AbstractRule
     public function getDescription(): string { return 'Text must have sufficient contrast against the background (4.5:1 minimum).'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::AA; }
     public function getSeverity(): Severity { return Severity::WARNING; }
+    public function getLevel(): int { return 5; }
 
     public function check(DOMElement $element): ?Violation
     {

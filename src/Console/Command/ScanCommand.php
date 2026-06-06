@@ -12,6 +12,7 @@ use YakNet\AccessibilityConsole\AI\GeminiFixer;
 use YakNet\AccessibilityConsole\Core\Config;
 use YakNet\AccessibilityConsole\Core\Scanner;
 use YakNet\AccessibilityConsole\Rules\StandardRuleSet;
+use YakNet\AccessibilityConsole\Rules\RuleLevels;
 use YakNet\AccessibilityConsole\Source\SourceLocator;
 
 class ScanCommand extends Command
@@ -29,7 +30,8 @@ class ScanCommand extends Command
             ->addOption('project-path', null, InputOption::VALUE_REQUIRED, 'Base path for source mapping')
             ->addOption('crawl', null, InputOption::VALUE_NONE, 'Crawl internal links recursively')
             ->addOption('depth', null, InputOption::VALUE_REQUIRED, 'Maximum crawling depth', '3')
-            ->addOption('max-pages', null, InputOption::VALUE_REQUIRED, 'Maximum number of pages to crawl', '20');
+            ->addOption('max-pages', null, InputOption::VALUE_REQUIRED, 'Maximum number of pages to crawl', '20')
+            ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Accessibility scan level (1-5)', '4');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -47,11 +49,19 @@ class ScanCommand extends Command
             $projectPath = '.';
         }
 
-        $io->title("Accessibility Console - Scanning: $target");
+        $levelOption = $input->getOption('level');
+        $level = is_numeric($levelOption) ? (int)$levelOption : 4;
+        if ($level < 1 || $level > 5) {
+            $io->error("Scan level must be between 1 and 5.");
+            return Command::FAILURE;
+        }
+
+        $io->title("Accessibility Console - Scanning: $target (Level $level)");
 
         // 1. Setup Scanner
         $scanner = new Scanner();
-        foreach (StandardRuleSet::all() as $rule) {
+        $rules = RuleLevels::getRulesForLevel($level);
+        foreach ($rules as $rule) {
             $scanner->addRule($rule);
         }
 

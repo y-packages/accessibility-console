@@ -13,6 +13,7 @@ class TabindexOrder extends AbstractRule
     public function getDescription(): string { return 'Avoid positive tabindex values to maintain natural keyboard focus order.'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::WARNING; }
+    public function getLevel(): int { return 3; }
 
     public function check(DOMElement $element): ?Violation
     {

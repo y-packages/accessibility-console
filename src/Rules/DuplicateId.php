@@ -48,4 +48,5 @@ class DuplicateId extends AbstractRule
 
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::ERROR; }
+    public function getLevel(): int { return 3; }
 }

@@ -13,6 +13,7 @@ class ImgAltText extends AbstractRule
     public function getDescription(): string { return 'Images must have an alt attribute.'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::ERROR; }
+    public function getLevel(): int { return 1; }
 
     public function check(DOMElement $element): ?Violation
     {

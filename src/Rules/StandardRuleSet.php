@@ -5,31 +5,10 @@ namespace YakNet\AccessibilityConsole\Rules;
 class StandardRuleSet
 {
     /**
-     * @return RuleInterface[]
+     * @return array<int, \YakNet\AccessibilityConsole\Rules\RuleInterface|\YakNet\AccessibilityConsole\Core\AbstractRule>
      */
     public static function all(): array
     {
-        /** @var RuleInterface[] $rules */
-        $rules = [
-            new HtmlHasLang(),
-            new ImgAltText(),
-            new EmptyLink(),
-            new ButtonName(),
-            new FormLabel(),
-            new FieldsetLegend(),
-            new HeadingOrder(),
-            new MetaViewport(),
-            new TabindexOrder(),
-            new ColorContrast(),
-            new DuplicateId(),
-            new AriaRole(),
-            new IframeTitle(),
-            new LinkTextGeneric(),
-            new PlaceholderAsLabel(),
-            new ImageAltRedundant(),
-            new AriaHiddenFocusable(),
-            new PageTitle(),
-        ];
-        return $rules;
+        return RuleLevels::getRulesForLevel(5);
     }
 }

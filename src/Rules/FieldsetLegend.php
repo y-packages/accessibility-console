@@ -13,6 +13,7 @@ class FieldsetLegend extends AbstractRule
     public function getDescription(): string { return 'Fieldsets should have a legend.'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::WARNING; }
+    public function getLevel(): int { return 2; }
 
     public function check(DOMElement $element): ?Violation
     {

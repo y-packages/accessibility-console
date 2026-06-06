@@ -28,7 +28,7 @@
     <div role="cool-widget" aria-controls="non-existent-popup">WAI-ARIA elements</div>
 
     <!-- Missing Iframe Title -->
-    <iframe src="https://www.youtube.com/embed/dQw4w9WgXcQ" width="560" height="315"></iframe>
+    <iframe src="https://www.youtube.com/embed/aqz-KE-bpKQ" width="560" height="315"></iframe>
 
     <!-- New WCAG Rule Violations for testing -->
     
@@ -48,6 +48,18 @@
         <button type="button">Hidden click</button>
     </div>
     <a href="#" aria-hidden="true">Hidden link</a>
+
+    <!-- Empty heading violation -->
+    <h2></h2>
+
+    <!-- Video missing track violation -->
+    <video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" width="320" height="240" controls></video>
+
+    <!-- Empty label violation -->
+    <label for="search-input"></label>
+
+    <!-- AriaFocusable violation -->
+    <div role="button">Clickable div button without tabindex</div>
 
     <p>This page has multiple accessibility issues.</p>
 </body>

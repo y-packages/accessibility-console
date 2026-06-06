@@ -7,25 +7,26 @@ use YakNet\AccessibilityConsole\Core\Severity;
 use YakNet\AccessibilityConsole\Core\Violation;
 use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
-class IframeTitle extends AbstractRule
+class EmptyLabel extends AbstractRule
 {
-    public function getId(): string { return 'WCAG_4_1_2_IFRAME_TITLE'; }
-    public function getDescription(): string { return 'Iframe elements must have a non-empty title attribute to describe their content.'; }
+    public function getId(): string { return 'WCAG_1_3_1_EMPTY_LABEL'; }
+    public function getDescription(): string { return 'Label elements must have discernible text content.'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::ERROR; }
     public function getLevel(): int { return 2; }
 
     public function check(DOMElement $element): ?Violation
     {
-        if (strtolower($element->tagName) !== 'iframe') {
+        if (strtolower($element->tagName) !== 'label') {
             return null;
         }
 
-        if (!$element->hasAttribute('title') || trim($element->getAttribute('title')) === '') {
+        $text = trim($element->textContent);
+        if ($text === '') {
             return $this->createViolation(
                 $element,
-                "Iframe element is missing a descriptive title attribute.",
-                "Add a descriptive title attribute, e.g., title=\"Embedded Map\" or title=\"Video Player\"."
+                $this->getDescription(),
+                'Add text content to the label element to describe its associated input.'
             );
         }
 

@@ -13,6 +13,7 @@ class AriaHiddenFocusable extends AbstractRule
     public function getDescription(): string { return 'Focusable elements must not be hidden with aria-hidden="true".'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::ERROR; }
+    public function getLevel(): int { return 5; }
 
     public function check(DOMElement $element): ?Violation
     {

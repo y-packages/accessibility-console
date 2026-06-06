@@ -19,6 +19,11 @@ abstract class AbstractRule
      */
     abstract public function getSeverity(): Severity;
 
+    public function getLevel(): int
+    {
+        return 4;
+    }
+
     protected function createViolation(string $message, \DOMElement $element): Violation
     {
         $doc = $element->ownerDocument;

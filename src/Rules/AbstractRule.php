@@ -14,6 +14,11 @@ abstract class AbstractRule implements RuleInterface
     abstract public function getStandard(): WCAGStandard;
     abstract public function getSeverity(): Severity;
 
+    public function getLevel(): int
+    {
+        return 4;
+    }
+
     protected function createViolation(DOMElement $element, string $message, ?string $suggestion = null): Violation
     {
         $doc = $element->ownerDocument;

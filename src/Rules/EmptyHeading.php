@@ -7,25 +7,26 @@ use YakNet\AccessibilityConsole\Core\Severity;
 use YakNet\AccessibilityConsole\Core\Violation;
 use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
-class IframeTitle extends AbstractRule
+class EmptyHeading extends AbstractRule
 {
-    public function getId(): string { return 'WCAG_4_1_2_IFRAME_TITLE'; }
-    public function getDescription(): string { return 'Iframe elements must have a non-empty title attribute to describe their content.'; }
+    public function getId(): string { return 'WCAG_1_3_1_EMPTY_HEADING'; }
+    public function getDescription(): string { return 'Heading elements (h1-h6) must have discernible text content.'; }
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::ERROR; }
     public function getLevel(): int { return 2; }
 
     public function check(DOMElement $element): ?Violation
     {
-        if (strtolower($element->tagName) !== 'iframe') {
+        if (!preg_match('/^h([1-6])$/i', $element->tagName)) {
             return null;
         }
 
-        if (!$element->hasAttribute('title') || trim($element->getAttribute('title')) === '') {
+        $text = trim($element->textContent);
+        if ($text === '' && !$element->hasAttribute('aria-label') && !$element->hasAttribute('title')) {
             return $this->createViolation(
                 $element,
-                "Iframe element is missing a descriptive title attribute.",
-                "Add a descriptive title attribute, e.g., title=\"Embedded Map\" or title=\"Video Player\"."
+                $this->getDescription(),
+                'Add descriptive text or an aria-label to the heading element.'
             );
         }
 
