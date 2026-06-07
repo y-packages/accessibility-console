@@ -31,7 +31,7 @@ class ScanCommand extends Command
             ->addOption('crawl', null, InputOption::VALUE_NONE, 'Crawl internal links recursively')
             ->addOption('depth', null, InputOption::VALUE_REQUIRED, 'Maximum crawling depth', '3')
             ->addOption('max-pages', null, InputOption::VALUE_REQUIRED, 'Maximum number of pages to crawl', '20')
-            ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Accessibility scan level (1-5)', '4');
+            ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Accessibility scan level (1-9)', '4');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -51,8 +51,8 @@ class ScanCommand extends Command
 
         $levelOption = $input->getOption('level');
         $level = is_numeric($levelOption) ? (int)$levelOption : 4;
-        if ($level < 1 || $level > 5) {
-            $io->error("Scan level must be between 1 and 5.");
+        if ($level < 1 || $level > 9) {
+            $io->error("Scan level must be between 1 and 9.");
             return Command::FAILURE;
         }
 
