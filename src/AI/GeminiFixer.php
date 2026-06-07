@@ -45,7 +45,7 @@ FIX: [Only the corrected HTML snippet]
 PROMPT;
 
         try {
-            $result = $this->client->generativeModel('gemini-2.5-flash')->generateContent($prompt);
+            $result = $this->client->generativeModel('gemini-3.1-flash-lite')->generateContent($prompt);
             return trim($result->text());
         } catch (\Throwable $e) {
             return "AI Düzeltme Hatası: " . $e->getMessage();

@@ -12,6 +12,7 @@
         "yaknet"
     ],
     "homepage": "https://forum.yak.net.tr",
+    "version": "2.9.2",
     "type": "library",
     "license": "MIT",
     "authors": [
