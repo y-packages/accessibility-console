@@ -1,0 +1,210 @@
+{
+    "generator": "YakNet Accessibility Console",
+    "violations": [
+        {
+            "file": "demo/broken.html",
+            "ruleId": "AriaRole",
+            "htmlSnippet": "<div role=\"cool-widget\" aria-controls=\"non-existent-popup\">WAI-ARIA elements</div>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "AriaRole",
+            "htmlSnippet": "<div role=\"cool-widget\" aria-controls=\"non-existent-popup\">WAI-ARIA elements</div>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "DuplicateId",
+            "htmlSnippet": "<h1 id=\"main-content\">Welcome to a broken page</h1>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "DuplicateId",
+            "htmlSnippet": "<div id=\"main-content\">This is a duplicate main-content ID div!</div>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"logo.png\">"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_1_1_ALT_REDUNDANT",
+            "htmlSnippet": "<img src=\"logo2.png\" alt=\"logo of our company\">"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_1_1_ALT_REDUNDANT",
+            "htmlSnippet": "<img src=\"profile.jpg\" alt=\"profile photo of john doe\">"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_2_2_VIDEO_TRACK",
+            "htmlSnippet": "<video src=\"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4\" width=\"320\" height=\"240\" controls=\"\"></video>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_3_1_EMPTY_HEADING",
+            "htmlSnippet": "<h2></h2>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_3_1_EMPTY_LABEL",
+            "htmlSnippet": "<label for=\"search-input\"></label>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_1_3_1_LABEL",
+            "htmlSnippet": "<input type=\"text\" placeholder=\"Search website...\">"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_2_1_1_ARIA_FOCUSABLE",
+            "htmlSnippet": "<div role=\"button\">Clickable div button without tabindex</div>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_2_4_2_PAGE_TITLE",
+            "htmlSnippet": "<head>\n    <title></title>\n</head>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_2_4_3_TABINDEX",
+            "htmlSnippet": "<a href=\"/keyboard\" tabindex=\"5\">Keyboard test</a>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_2_4_4_LINK_GENERIC",
+            "htmlSnippet": "<a href=\"/read-more\">Click here</a>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_2_4_4_LINK_GENERIC",
+            "htmlSnippet": "<a href=\"/devam-oku\">devamını oku</a>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_2_4_4_LINK_TEXT",
+            "htmlSnippet": "<a href=\"https://google.com\"></a>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_3_1_1_LANG",
+            "htmlSnippet": "<html><head>\n    <title></title>\n</head>\n<body>\n    <h1 id=\"main-content\">Welcome to a broken page</h1>\n    \n    <!-- Missing alt attribute -->\n    <img src=\"logo.png\">\n    \n    <!-- Empty link -->\n    <a href=\"https://google.com\"></a>\n    \n    <!-- Empty button -->\n    <button type=\"submit\"></button>\n    \n    <!-- Positive tabindex -->\n    <a href=\"/keyboard\" tabindex=\"5\">Keyboard test</a>\n\n    <!-- Duplicate ID -->\n    <div id=\"main-content\">This is a duplicate main-content ID div!</div>\n\n    <!-- Low Contrast -->\n    <p style=\"color: #888888; background-color: #999999;\">This text has extremely low contrast ratio!</p>\n\n    <!-- Invalid ARIA role and missing controls target -->\n    <div role=\"cool-widget\" aria-controls=\"non-existent-popup\">WAI-ARIA elements</div>\n\n    <!-- Missing Iframe Title -->\n    <iframe src=\"https://www.youtube.com/embed/aqz-KE-bpKQ\" width=\"560\" height=\"315\"></iframe>\n\n    <!-- New WCAG Rule Violations for testing -->\n    \n    <!-- LinkTextGeneric: Generic text without context -->\n    <a href=\"/read-more\">Click here</a>\n    <a href=\"/devam-oku\">devamını oku</a>\n    \n    <!-- PlaceholderAsLabel: Input relying only on placeholder -->\n    <input type=\"text\" placeholder=\"Search website...\">\n\n    <!-- ImageAltRedundant: Redundant words in alt text -->\n    <img src=\"logo2.png\" alt=\"logo of our company\">\n    <img src=\"profile.jpg\" alt=\"profile photo of john doe\">\n\n    <!-- AriaHiddenFocusable: Focusable element hidden with aria-hidden=\"true\" -->\n    <div aria-hidden=\"true\">\n        <button type=\"button\">Hidden click</button>\n    </div>\n    <a href=\"#\" aria-hidden=\"true\">Hidden link</a>\n\n    <!-- Empty heading violation -->\n    <h2></h2>\n\n    <!-- Video missing track violation -->\n    <video src=\"https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4\" width=\"320\" height=\"240\" controls=\"\"></video>\n\n    <!-- Empty label violation -->\n    <label for=\"search-input\"></label>\n\n    <!-- AriaFocusable violation -->\n    <div role=\"button\">Clickable div button without tabindex</div>\n\n    <p>This page has multiple accessibility issues.</p>\n</body>\n\n</html>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_3_3_2_PLACEHOLDER_LABEL",
+            "htmlSnippet": "<input type=\"text\" placeholder=\"Search website...\">"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_4_1_2_BUTTON",
+            "htmlSnippet": "<button type=\"submit\"></button>"
+        },
+        {
+            "file": "demo/broken.html",
+            "ruleId": "WCAG_4_1_2_IFRAME_TITLE",
+            "htmlSnippet": "<iframe src=\"https://www.youtube.com/embed/aqz-KE-bpKQ\" width=\"560\" height=\"315\"></iframe>"
+        },
+        {
+            "file": "demo/dynamic_preview.html",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"images/gadget.jpg\" width=\"100\">"
+        },
+        {
+            "file": "demo/dynamic_preview.html",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"images/widget.png\" width=\"100\">"
+        },
+        {
+            "file": "demo/dynamic_preview.html",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"images/thing.jpg\" width=\"100\">"
+        },
+        {
+            "file": "demo/dynamic_preview.html",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"https://via.placeholder.com/150\">"
+        },
+        {
+            "file": "demo/dynamic_preview.html",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"https://via.placeholder.com/150\">"
+        },
+        {
+            "file": "demo/views-fixed/contact.php",
+            "ruleId": "WCAG_3_1_1_LANG",
+            "htmlSnippet": "<html><h2>Contact Us</h2>\n<p>Get in touch with us.</p>\n\n<form action=\"\" method=\"post\">\n    <div style=\"margin-bottom: 1rem;\">\n        <!-- FIXED: Wrapped in label -->\n        <label>\n            Name:\n            <input type=\"text\" name=\"fullname\" placeholder=\"John Doe\" style=\"padding: 8px; width: 100%;\">\n        </label>\n    </div>\n\n    <div style=\"margin-bottom: 1rem;\">\n        <!-- FIXED: Added for/id association -->\n        <label for=\"email\">Email Address</label>\n        <br>\n        <input type=\"email\" id=\"email\" name=\"email\" style=\"padding: 8px; width: 100%;\">\n    </div>\n\n    <div style=\"margin-bottom: 1rem;\">\n        <label for=\"message\">Message</label>\n        <br>\n        <textarea id=\"message\" name=\"message\" rows=\"5\" style=\"width: 100%;\"></textarea>\n    </div>\n\n    <!-- FIXED: Added inner text or aria-label -->\n    <a href=\"#\" class=\"btn\" aria-label=\"Send via WhatsApp\">\n        <i class=\"fa fa-send\"></i> Send\n    </a>\n\n    <button type=\"submit\" class=\"btn\">Send Message</button>\n</form></html>"
+        },
+        {
+            "file": "demo/views-fixed/home.php",
+            "ruleId": "WCAG_1_3_1_EMPTY_HEADING",
+            "htmlSnippet": "<h3>\n                <?php echo $product['name']; >\n            </h3>"
+        },
+        {
+            "file": "demo/views-fixed/home.php",
+            "ruleId": "WCAG_3_1_1_LANG",
+            "htmlSnippet": "<html><h2>Latest Products</h2>\n<p>Welcome to our accessible product catalog.</p>\n\n<?php $products = [\n    ['id' => 1, 'name' => 'Super Gadget', 'image' => 'gadget.jpg', 'price' => '$99'],\n    ['id' => 2, 'name' => 'Mega Widget', 'image' => 'widget.png', 'price' => '$49'],\n    ['id' => 3, 'name' => 'Ultra Thing', 'image' => 'thing.jpg', 'price' => '$199'],\n];\n>\n\n<div class=\"products\">\n    <?php foreach ($products as $product): >\n        <div class=\"card\">\n            <!-- FIXED: Added alt attribute describing the product -->\n            <img src=\"images/&lt;?php%20echo%20$product['image'];%20?&gt;\" width=\"100\" alt=\"&lt;?php echo htmlspecialchars($product['name']); ?&gt;\">\n            <h3>\n                <?php echo $product['name']; >\n            </h3>\n            <p>\n                <?php echo $product['price']; >\n            </p>\n            <button class=\"btn\">Buy Now</button>\n        </div>\n    <?php endforeach; >\n</div>\n\n<hr>\n\n<h3>Sponsors</h3>\n<div>\n    <!-- FIXED: Added empty alt=\"\" for decorative images -->\n    <img src=\"https://via.placeholder.com/150\" alt=\"\">\n    <img src=\"https://via.placeholder.com/150\" alt=\"\">\n</div></html>"
+        },
+        {
+            "file": "demo/views/contact.php",
+            "ruleId": "WCAG_1_3_1_LABEL",
+            "htmlSnippet": "<input type=\"text\" name=\"fullname\" placeholder=\"John Doe\" style=\"padding: 8px; width: 100%;\">"
+        },
+        {
+            "file": "demo/views/contact.php",
+            "ruleId": "WCAG_1_3_1_LABEL",
+            "htmlSnippet": "<input type=\"email\" name=\"email\" style=\"padding: 8px; width: 100%;\">"
+        },
+        {
+            "file": "demo/views/contact.php",
+            "ruleId": "WCAG_2_4_4_LINK_TEXT",
+            "htmlSnippet": "<a href=\"#\" class=\"btn\">\n        <i class=\"fa fa-send\"></i> <!-- Empty link text error (if we had that rule) -->\n    </a>"
+        },
+        {
+            "file": "demo/views/contact.php",
+            "ruleId": "WCAG_3_1_1_LANG",
+            "htmlSnippet": "<html><h2>Contact Us</h2>\n<p>Get in touch with us.</p>\n\n<form action=\"\" method=\"post\">\n    <div style=\"margin-bottom: 1rem;\">\n        <!-- ERROR: No label for input -->\n        <div>Name:</div>\n        <input type=\"text\" name=\"fullname\" placeholder=\"John Doe\" style=\"padding: 8px; width: 100%;\">\n    </div>\n\n    <div style=\"margin-bottom: 1rem;\">\n        <!-- ERROR: Label exists but not associated with For/ID -->\n        <label>Email Address</label>\n        <br>\n        <input type=\"email\" name=\"email\" style=\"padding: 8px; width: 100%;\">\n    </div>\n\n    <div style=\"margin-bottom: 1rem;\">\n        <label for=\"message\">Message</label>\n        <br>\n        <textarea id=\"message\" name=\"message\" rows=\"5\" style=\"width: 100%;\"></textarea>\n    </div>\n\n    <!-- ERROR: Submit button without clear text if it was an input type=image, but button is usually fine. \n         Let's add a problematic icon link -->\n    <a href=\"#\" class=\"btn\">\n        <i class=\"fa fa-send\"></i> <!-- Empty link text error (if we had that rule) -->\n    </a>\n\n    <button type=\"submit\" class=\"btn\">Send Message</button>\n</form></html>"
+        },
+        {
+            "file": "demo/views/contact.php",
+            "ruleId": "WCAG_3_3_2_PLACEHOLDER_LABEL",
+            "htmlSnippet": "<input type=\"text\" name=\"fullname\" placeholder=\"John Doe\" style=\"padding: 8px; width: 100%;\">"
+        },
+        {
+            "file": "demo/views/home.php",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"images/&lt;?php%20echo%20$product['image'];%20?&gt;\" width=\"100\">"
+        },
+        {
+            "file": "demo/views/home.php",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"https://via.placeholder.com/150\">"
+        },
+        {
+            "file": "demo/views/home.php",
+            "ruleId": "WCAG_1_1_1_ALT",
+            "htmlSnippet": "<img src=\"https://via.placeholder.com/150\">"
+        },
+        {
+            "file": "demo/views/home.php",
+            "ruleId": "WCAG_1_3_1_EMPTY_HEADING",
+            "htmlSnippet": "<h3>\n                <?php echo $product['name']; >\n            </h3>"
+        },
+        {
+            "file": "demo/views/home.php",
+            "ruleId": "WCAG_3_1_1_LANG",
+            "htmlSnippet": "<html><h2>Latest Products</h2>\n<p>Welcome to our dynamic product catalog. (Intentionally filled with errors)</p>\n\n<?php $products = [\n    ['id' => 1, 'name' => 'Super Gadget', 'image' => 'gadget.jpg', 'price' => '$99'],\n    ['id' => 2, 'name' => 'Mega Widget', 'image' => 'widget.png', 'price' => '$49'],\n    ['id' => 3, 'name' => 'Ultra Thing', 'image' => 'thing.jpg', 'price' => '$199'],\n];\n>\n\n<div class=\"products\">\n    <?php foreach ($products as $product): >\n        <div class=\"card\">\n            <!-- ERROR: Dynamic image without alt text -->\n            <img src=\"images/&lt;?php%20echo%20$product['image'];%20?&gt;\" width=\"100\">\n            <h3>\n                <?php echo $product['name']; >\n            </h3>\n            <p>\n                <?php echo $product['price']; >\n            </p>\n            <button class=\"btn\">Buy Now</button>\n            <!-- Error: Button might need specific accessible name if icon-only, but text is okay here. -->\n        </div>\n    <?php endforeach; >\n</div>\n\n<hr>\n\n<h3>Sponsors</h3>\n<div>\n    <!-- ERROR: Decorative image causing noise, missing alt=\"\" -->\n    <img src=\"https://via.placeholder.com/150\">\n    <img src=\"https://via.placeholder.com/150\">\n</div></html>"
+        },
+        {
+            "file": "demo/views/layout.php",
+            "ruleId": "WCAG_2_4_4_LINK_TEXT",
+            "htmlSnippet": "<a href=\"#\" class=\"btn\"></a>"
+        },
+        {
+            "file": "demo/views/layout.php",
+            "ruleId": "WCAG_3_1_1_LANG",
+            "htmlSnippet": "<html><!-- Missing lang attribute error --><head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>YakNet Dynamic Demo</title>\n    <style>\n        body {\n            font-family: sans-serif;\n            margin: 0;\n            padding: 0;\n            line-height: 1.6;\n        }\n\n        header {\n            background: #333;\n            color: #fff;\n            padding: 1rem;\n        }\n\n        nav a {\n            color: #fff;\n            margin-right: 1rem;\n            text-decoration: none;\n        }\n\n        .container {\n            padding: 2rem;\n            max-width: 800px;\n            margin: 0 auto;\n        }\n\n        .card {\n            border: 1px solid #ddd;\n            padding: 1rem;\n            margin-bottom: 1rem;\n            border-radius: 4px;\n        }\n\n        .btn {\n            background: #007bff;\n            color: white;\n            padding: 0.5rem 1rem;\n            border: none;\n            cursor: pointer;\n        }\n    </style>\n</head>\n\n<body>\n    <header>\n        <div class=\"container\" style=\"padding: 0;\">\n            <h1>My Dynamic Site</h1>\n            <nav>\n                <a href=\"?page=home\">Home</a>\n                <a href=\"?page=contact\">Contact</a>\n                <a href=\"?page=about\">About</a>\n                <a href=\"#\" class=\"btn\"></a> <!-- Error: Empty Link -->\n            </nav>\n        </div>\n    </header>\n\n    <main class=\"container\">\n        <?php include $viewPath; >\n    </main>\n\n    <footer style=\"text-align: center; padding: 2rem; background: #f4f4f4; margin-top: 2rem;\">\n        ©\n        <?php echo date('Y'); > YakNet Demo\n    </footer>\n</body>\n\n</html>"
+        }
+    ]
+}

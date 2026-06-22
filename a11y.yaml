@@ -1,0 +1,32 @@
+# YakNet Accessibility Console Configuration
+# For detailed configuration, see: https://forum.yak.net.tr
+
+# Paths to scan (can be directories or specific files)
+paths:
+  - .
+
+# Exclude directories or files
+exclude_paths:
+  - vendor
+  - node_modules
+  - tests
+  - storage
+  - .git
+
+# Accessibility scanning level (1-9, default 4)
+level: 4
+
+# Output format (console, json, html, github)
+format: console
+
+# Path to the baseline file for ignoring existing violations
+baseline: a11y-baseline.json
+
+# Rule adjustments
+rules:
+  # Rules to exclude from analysis
+  exclude:
+    # - WCAG_1_3_1_FIELDSET
+  # Additional custom rules to run
+  include:
+    # - App\Rules\MyCustomRule

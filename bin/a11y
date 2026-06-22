@@ -6,11 +6,15 @@ require __DIR__ . '/../vendor/autoload.php';
 use Symfony\Component\Console\Application;
 use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
 use YakNet\AccessibilityConsole\Console\Command\FixCommand;
+use YakNet\AccessibilityConsole\Console\Command\InitCommand;
+use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
 
-$application = new Application('YakNet Accessibility Console', '2.0.0');
+$application = new Application('YakNet Accessibility Console', '2.9.2');
 
 // Add commands
 $application->add(new ScanCommand());
 $application->add(new FixCommand());
+$application->add(new InitCommand());
+$application->add(new RulesCommand());
 
 $application->run();
