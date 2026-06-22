@@ -21,6 +21,11 @@ class EmptyLabel extends AbstractRule
             return null;
         }
 
+        $html = $element->ownerDocument ? $element->ownerDocument->saveHTML($element) : '';
+        if ($html !== false && preg_match('/<\?php|\{\{|\{%/i', $html)) {
+            return null;
+        }
+
         $text = trim($element->textContent);
         if ($text === '') {
             return $this->createViolation(

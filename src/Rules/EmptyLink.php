@@ -21,6 +21,11 @@ class EmptyLink extends AbstractRule
             return null;
         }
 
+        $html = $element->ownerDocument ? $element->ownerDocument->saveHTML($element) : '';
+        if ($html !== false && preg_match('/<\?php|\{\{|\{%/i', $html)) {
+            return null;
+        }
+
         $text = trim($element->textContent);
         if ($text === '' && !$element->hasAttribute('aria-label') && !$element->hasAttribute('title')) {
             // Check for images inside

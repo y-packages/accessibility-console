@@ -23,9 +23,11 @@ class Analyser
         $cwd = getcwd();
         $this->projectRoot = $cwd ? str_replace('\\', '/', realpath($cwd) ?: $cwd) : '.';
         
-        $baselinePath = $this->config->getBaselinePath();
-        if ($baselinePath) {
-            $this->baselineManager->load($this->projectRoot . '/' . $baselinePath);
+        if ($baselineManager === null) {
+            $baselinePath = $this->config->getBaselinePath();
+            if ($baselinePath) {
+                $this->baselineManager->load($this->projectRoot . '/' . $baselinePath);
+            }
         }
     }
 
