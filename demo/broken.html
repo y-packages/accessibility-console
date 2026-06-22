@@ -1,66 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr"><!-- FIXED: Added lang attribute (WCAG 3.1.1) -->
 <head>
-    <title></title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Erişilebilir Demo Sayfa</title><!-- FIXED: Non-empty page title (WCAG 2.4.2) -->
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background: #ffffff;
+            color: #1a1a1a; /* FIXED: High contrast text (WCAG 1.4.3) */
+            line-height: 1.6;
+        }
+        /* FIXED: Sufficient contrast (WCAG 1.4.3) - was #888 on #999, now dark on white */
+        .low-contrast-example {
+            color: #595959; /* 7:1 contrast on white */
+            background-color: #ffffff;
+            padding: 0.5rem;
+        }
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+            font-weight: 600;
+        }
+        input {
+            padding: 0.4rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 300px;
+        }
+        iframe {
+            border: none;
+        }
+        video {
+            display: block;
+            margin-top: 0.5rem;
+        }
+        [role="button"] {
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
-    <h1 id="main-content">Welcome to a broken page</h1>
-    
-    <!-- Missing alt attribute -->
-    <img src="logo.png">
-    
-    <!-- Empty link -->
-    <a href="https://google.com"></a>
-    
-    <!-- Empty button -->
-    <button type="submit"></button>
-    
-    <!-- Positive tabindex -->
-    <a href="/keyboard" tabindex="5">Keyboard test</a>
+    <h1 id="main-content">Erişilebilir Demo Sayfa</h1>
+    <!-- FIXED: Removed duplicate id="main-content" (WCAG 4.1.1) -->
 
-    <!-- Duplicate ID -->
-    <div id="main-content">This is a duplicate main-content ID div!</div>
+    <!-- FIXED: Added alt attribute (WCAG 1.1.1) -->
+    <img src="logo.png" alt="YakNet Şirket">
 
-    <!-- Low Contrast -->
-    <p style="color: #888888; background-color: #999999;">This text has extremely low contrast ratio!</p>
+    <!-- FIXED: Added descriptive link text (WCAG 2.4.4) -->
+    <a href="https://google.com">Google Ana Sayfasına Git</a>
 
-    <!-- Invalid ARIA role and missing controls target -->
-    <div role="cool-widget" aria-controls="non-existent-popup">WAI-ARIA elements</div>
+    <!-- FIXED: Added discernible button text (WCAG 4.1.2) -->
+    <button type="submit">Formu Gönder</button>
 
-    <!-- Missing Iframe Title -->
-    <iframe src="https://www.youtube.com/embed/aqz-KE-bpKQ" width="560" height="315"></iframe>
+    <!-- FIXED: Removed positive tabindex (WCAG 2.4.3) — use natural DOM order -->
+    <a href="/keyboard">Klavye Testi</a>
 
-    <!-- New WCAG Rule Violations for testing -->
-    
-    <!-- LinkTextGeneric: Generic text without context -->
-    <a href="/read-more">Click here</a>
-    <a href="/devam-oku">devamını oku</a>
-    
-    <!-- PlaceholderAsLabel: Input relying only on placeholder -->
-    <input type="text" placeholder="Search website...">
+    <!-- FIXED: Removed duplicate id="main-content" — unique wrapper instead -->
+    <div id="duplicate-content-wrapper">Bu bölümün içeriği buradadır.</div>
 
-    <!-- ImageAltRedundant: Redundant words in alt text -->
-    <img src="logo2.png" alt="logo of our company">
-    <img src="profile.jpg" alt="profile photo of john doe">
+    <!-- FIXED: High contrast text (WCAG 1.4.3) -->
+    <p class="low-contrast-example">Bu metnin kontrast oranı WCAG AA gereksinimlerini karşılamaktadır.</p>
 
-    <!-- AriaHiddenFocusable: Focusable element hidden with aria-hidden="true" -->
-    <div aria-hidden="true">
-        <button type="button">Hidden click</button>
+    <!-- FIXED: Valid WAI-ARIA role (WCAG 4.1.2) and removed reference to non-existent element -->
+    <div role="region" aria-label="WAI-ARIA Örnek Bölüm">WAI-ARIA bölüm örneği</div>
+
+    <!-- FIXED: Added descriptive title to iframe (WCAG 4.1.2) -->
+    <iframe
+        src="https://www.youtube.com/embed/aqz-KE-bpKQ"
+        width="560"
+        height="315"
+        title="YouTube Video: Örnek Video İçeriği"
+    ></iframe>
+
+    <!-- FIXED: Descriptive link text instead of generic "click here" / "devamını oku" (WCAG 2.4.4) -->
+    <a href="/read-more">Makaleyi Devamı: WCAG Erişilebilirlik Kılavuzu</a>
+    <a href="/devam-oku">Şiir Serisinin Devamını Oku: "Bahar Rüzgarı"</a>
+
+    <!-- FIXED: Added associated <label> element (WCAG 1.3.1 & 3.3.2) -->
+    <div>
+        <label for="search-input">Web sitesinde ara</label>
+        <input type="text" id="search-input" placeholder="Arama teriminizi girin...">
     </div>
-    <a href="#" aria-hidden="true">Hidden link</a>
 
-    <!-- Empty heading violation -->
-    <h2></h2>
+    <!-- FIXED: Removed redundant words "logo" and "photo" from alt texts (WCAG 1.1.1) -->
+    <img src="logo2.png" alt="Şirketimizin simgesi">
+    <img src="profile.jpg" alt="John Doe vesikalık">
 
-    <!-- Video missing track violation -->
-    <video src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" width="320" height="240" controls></video>
+    <!-- FIXED: Removed aria-hidden="true" from focusable elements (WCAG 4.1.2) -->
+    <div>
+        <button type="button">Gizli Olmayan Tıklanabilir Düğme</button>
+    </div>
+    <a href="#">Normal Bağlantı</a>
 
-    <!-- Empty label violation -->
-    <label for="search-input"></label>
+    <!-- FIXED: Added non-empty heading text (WCAG 2.4.6) -->
+    <h2>Alt Bölüm Başlığı</h2>
 
-    <!-- AriaFocusable violation -->
-    <div role="button">Clickable div button without tabindex</div>
+    <!-- FIXED: Added <track> element for video captions (WCAG 1.2.2) -->
+    <video
+        src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+        width="320"
+        height="240"
+        controls
+    >
+        <track kind="captions" src="captions.vtt" srclang="tr" label="Türkçe Altyazı" default>
+    </video>
 
-    <p>This page has multiple accessibility issues.</p>
+    <!-- FIXED: Added non-empty label text (WCAG 1.3.1) -->
+    <label for="name-input">Ad Soyad</label>
+    <input type="text" id="name-input" name="name">
+
+    <!-- FIXED: Added tabindex="0" to make role="button" keyboard focusable (WCAG 2.1.1) -->
+    <div role="button" tabindex="0">Tıklanabilir Div Düğme (Erişilebilir)</div>
+
+    <p>Bu sayfa WCAG 2.1 erişilebilirlik standartlarına uygun olarak düzenlenmiştir.</p>
 </body>
 </html>
