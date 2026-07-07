@@ -12,12 +12,12 @@
         "yaknet"
     ],
     "homepage": "https://forum.yak.net.tr",
-    "version": "3.0.3",
+    "version": "3.0.4",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
-            "name": "YakNet BiliÅŸim",
+            "name": "YakNet Bilişim",
             "email": "info@yakhub.com.tr",
             "role": "Developer"
         }
