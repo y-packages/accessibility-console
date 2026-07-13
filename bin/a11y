@@ -18,12 +18,12 @@ use YakNet\AccessibilityConsole\Console\Command\InitCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
 
 $container = ContainerFactory::create();
-$application = new Application('YakNet Accessibility Console', '3.1.0');
+$application = new Application('YakNet Accessibility Console', '3.1.2');
 
 // Add commands resolved via DI Container
-$application->add($container->get(ScanCommand::class));
-$application->add($container->get(FixCommand::class));
-$application->add($container->get(InitCommand::class));
-$application->add($container->get(RulesCommand::class));
+$application->addCommand($container->get(ScanCommand::class));
+$application->addCommand($container->get(FixCommand::class));
+$application->addCommand($container->get(InitCommand::class));
+$application->addCommand($container->get(RulesCommand::class));
 
 $application->run();
