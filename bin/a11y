@@ -11,17 +11,19 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
 }
 
 use Symfony\Component\Console\Application;
+use YakNet\AccessibilityConsole\Core\Container\ContainerFactory;
 use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
 use YakNet\AccessibilityConsole\Console\Command\FixCommand;
 use YakNet\AccessibilityConsole\Console\Command\InitCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
 
-$application = new Application('YakNet Accessibility Console', '3.0.1');
+$container = ContainerFactory::create();
+$application = new Application('YakNet Accessibility Console', '3.1.0');
 
-// Add commands
-$application->addCommand(new ScanCommand());
-$application->addCommand(new FixCommand());
-$application->addCommand(new InitCommand());
-$application->addCommand(new RulesCommand());
+// Add commands resolved via DI Container
+$application->add($container->get(ScanCommand::class));
+$application->add($container->get(FixCommand::class));
+$application->add($container->get(InitCommand::class));
+$application->add($container->get(RulesCommand::class));
 
 $application->run();

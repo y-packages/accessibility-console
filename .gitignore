@@ -4,3 +4,5 @@
 /rapor.html
 /.phpunit.result.cache
 /phpstan-baseline.neon
+/.phpunit.cache/
+

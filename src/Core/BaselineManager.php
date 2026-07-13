@@ -82,9 +82,9 @@ class BaselineManager
 
     private function calculateKey(string $file, string $ruleId, string $htmlSnippet): string
     {
-        // Normalize whitespaces and trim to prevent minor formatting updates from breaking baseline
-        $normalizedSnippet = preg_replace('/\s+/', ' ', trim($htmlSnippet));
-        if ($normalizedSnippet === null) {
+        // Normalize snippet using fuzzy baseline matcher
+        $normalizedSnippet = \YakNet\AccessibilityConsole\Core\Baseline\FuzzyBaselineMatcher::normalize($htmlSnippet);
+        if ($normalizedSnippet === '') {
             $normalizedSnippet = trim($htmlSnippet);
         }
 

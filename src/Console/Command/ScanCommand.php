@@ -18,6 +18,10 @@ use YakNet\AccessibilityConsole\Rules\RuleLevels;
 use YakNet\AccessibilityConsole\Reporting\ConsoleFormatter;
 use YakNet\AccessibilityConsole\Reporting\GithubFormatter;
 use YakNet\AccessibilityConsole\Reporting\JsonFormatter;
+use YakNet\AccessibilityConsole\Reporting\XmlFormatter;
+use YakNet\AccessibilityConsole\Reporting\MarkdownFormatter;
+use YakNet\AccessibilityConsole\Reporting\CsvFormatter;
+use YakNet\AccessibilityConsole\Reporting\GitLabCodeQualityFormatter;
 use YakNet\AccessibilityConsole\Source\SourceLocator;
 
 class ScanCommand extends Command
@@ -202,9 +206,28 @@ class ScanCommand extends Command
             $formatter = new JsonFormatter();
         } elseif ($format === 'github') {
             $formatter = new GithubFormatter();
+        } elseif ($format === 'xml') {
+            $formatter = new XmlFormatter();
+        } elseif ($format === 'markdown') {
+            $formatter = new MarkdownFormatter();
+        } elseif ($format === 'csv') {
+            $formatter = new CsvFormatter();
+        } elseif ($format === 'gitlab') {
+            $formatter = new GitLabCodeQualityFormatter();
         }
 
         $exitCode = $formatter->format($violations, $baselinedCount, $io);
+
+        if ($format === 'console') {
+            $metrics = \YakNet\AccessibilityConsole\Core\Metrics\AccessibilityScoreCalculator::calculate($violations);
+            $io->section("Accessibility Ratings");
+            $color = $metrics['score'] >= 90 ? 'green' : ($metrics['score'] >= 70 ? 'yellow' : 'red');
+            $io->writeln(sprintf("Health Score: <fg=%s>%d/100</>", $color, $metrics['score']));
+            $io->writeln(sprintf(" - Screen Reader / Visual Impact: <fg=cyan>%d%%</>", $metrics['visualImpact']));
+            $io->writeln(sprintf(" - Keyboard / Motor Impact: <fg=cyan>%d%%</>", $metrics['motorImpact']));
+            $io->writeln(sprintf(" - Cognitive / Distraction Impact: <fg=cyan>%d%%</>", $metrics['cognitiveImpact']));
+            $io->newLine();
+        }
 
         // Export report if --report is specified
         $reportPath = $input->getOption('report');

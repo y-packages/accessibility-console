@@ -8,7 +8,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use YakNet\AccessibilityConsole\AI\GeminiFixer;
+use YakNet\AccessibilityConsole\AI\AiFixerManager;
 use YakNet\AccessibilityConsole\Core\Analyser;
 use YakNet\AccessibilityConsole\Core\Config;
 use YakNet\AccessibilityConsole\Core\Scanner;
@@ -89,7 +89,8 @@ class FixCommand extends Command
 
         $io->note(sprintf("Found %d violations. Starting AI analysis and healing...", count($violations)));
 
-        $fixer = new GeminiFixer($apiKey);
+        $fixer = new AiFixerManager($apiKey);
+        $diffGenerator = new \YakNet\AccessibilityConsole\Core\Diff\VisualDiffGenerator();
         $fixedCount = 0;
 
         // Group violations by file path
@@ -116,27 +117,49 @@ class FixCommand extends Command
                 continue;
             }
 
+            $localHealer = new \YakNet\AccessibilityConsole\Core\SelfHealing\LocalHealer();
+
             foreach ($fileViolations as $violation) {
                 $line = $violation->location['line'] ?? 0;
                 $io->write("Analyzing <fg=yellow>{$violation->ruleId}</> on line <fg=cyan>$line</>... ");
 
-                // Get AI Suggestion
-                $rawSuggestion = $fixer->suggestFix($violation);
+                // Try Local Healer first
+                $rawSuggestion = $localHealer->heal($violation);
+                $isLocalFix = false;
+
+                if ($rawSuggestion !== null) {
+                    $isLocalFix = true;
+                } else {
+                    // Fallback to AI Suggestion
+                    $rawSuggestion = $fixer->suggestFix($violation);
+                }
+
                 $suggestion = $rawSuggestion;
-                if ($rawSuggestion && str_contains($rawSuggestion, 'FIX:')) {
+                if (is_string($rawSuggestion) && str_contains($rawSuggestion, 'FIX:')) {
                     preg_match('/FIX:(.*)/s', $rawSuggestion, $matches);
                     $suggestion = trim($matches[1] ?? $rawSuggestion);
                     $suggestion = preg_replace('/^```html\s*|\s*```$/i', '', $suggestion);
                 }
 
-                if (!$suggestion || ($suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:'))) {
+                if (!is_string($suggestion)) {
                     $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
                     continue;
                 }
 
-                $io->writeln("<fg=green>Fix Found!</>");
-                $io->writeln("  <fg=gray>Original:</> <fg=red>" . htmlspecialchars(trim($violation->htmlSnippet)) . "</>");
-                $io->writeln("  <fg=gray>AI Fix:  </> <fg=green>" . htmlspecialchars(trim($suggestion)) . "</>");
+                if (is_string($rawSuggestion) && $suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:')) {
+                    $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
+                    continue;
+                }
+
+                if ($isLocalFix) {
+                    $io->writeln("<fg=green>Local Fix Found!</>");
+                } else {
+                    $io->writeln("<fg=green>AI Fix Found!</>");
+                }
+                $io->writeln("  <fg=gray>Diff:</>");
+                $diffOutput = $diffGenerator->generate($violation->htmlSnippet, $suggestion);
+                $indentedDiff = implode("\n", array_map(fn($line) => '    ' . $line, explode("\n", trim($diffOutput))));
+                $io->writeln($indentedDiff);
 
                 if ($dryRun) {
                     $io->writeln("  <fg=blue>[DRY RUN] File modification skipped.</>");
@@ -210,7 +233,8 @@ class FixCommand extends Command
 
         $io->note("Found " . count($violations) . " violations. Starting AI analysis...");
 
-        $fixer = new GeminiFixer($apiKey);
+        $fixer = new AiFixerManager($apiKey);
+        $diffGenerator = new \YakNet\AccessibilityConsole\Core\Diff\VisualDiffGenerator();
         $locator = new SourceLocator($projectPath);
         $fixedCount = 0;
 
@@ -224,23 +248,42 @@ class FixCommand extends Command
                 continue;
             }
 
-            // Get AI Suggestion
-            $rawSuggestion = $fixer->suggestFix($violation);
+            $localHealer = new \YakNet\AccessibilityConsole\Core\SelfHealing\LocalHealer();
+            $rawSuggestion = $localHealer->heal($violation);
+            $isLocalFix = false;
+
+            if ($rawSuggestion !== null) {
+                $isLocalFix = true;
+            } else {
+                $rawSuggestion = $fixer->suggestFix($violation);
+            }
+
             $suggestion = $rawSuggestion;
-            if ($rawSuggestion && str_contains($rawSuggestion, 'FIX:')) {
+            if (is_string($rawSuggestion) && str_contains($rawSuggestion, 'FIX:')) {
                 preg_match('/FIX:(.*)/s', $rawSuggestion, $matches);
                 $suggestion = trim($matches[1] ?? $rawSuggestion);
                 $suggestion = preg_replace('/^```html\s*|\s*```$/i', '', $suggestion);
             }
 
-            if (!$suggestion || ($suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:'))) {
+            if (!is_string($suggestion)) {
                 $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
                 continue;
             }
 
-            $io->writeln("<fg=green>Fix Found!</>");
-            $io->writeln("  <fg=gray>Original:</> <fg=red>" . htmlspecialchars(trim($violation->htmlSnippet)) . "</>");
-            $io->writeln("  <fg=gray>AI Fix:  </> <fg=green>" . htmlspecialchars(trim($suggestion)) . "</>");
+            if (is_string($rawSuggestion) && $suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:')) {
+                $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
+                continue;
+            }
+
+            if ($isLocalFix) {
+                $io->writeln("<fg=green>Local Fix Found!</>");
+            } else {
+                $io->writeln("<fg=green>AI Fix Found!</>");
+            }
+            $io->writeln("  <fg=gray>Diff:</>");
+            $diffOutput = $diffGenerator->generate($violation->htmlSnippet, $suggestion);
+            $indentedDiff = implode("\n", array_map(fn($line) => '    ' . $line, explode("\n", trim($diffOutput))));
+            $io->writeln($indentedDiff);
 
             if ($dryRun) {
                 $io->writeln("  <fg=blue>[DRY RUN] File modification skipped.</>");
