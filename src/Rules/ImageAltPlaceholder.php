@@ -35,7 +35,9 @@ class ImageAltPlaceholder extends AbstractRule
         // Generic placeholder checks
         $placeholders = [
             'image', 'photo', 'picture', 'logo', 'icon', 'placeholder', 'untitled', 'temp', 'blank', 'pic', 'dot',
-            'resim', 'foto', 'fotoğraf', 'görsel', 'grafik', 'ikon', 'logo'
+            'resim', 'foto', 'fotoğraf', 'görsel', 'grafik', 'ikon', 'logo',
+            'arkaplan', 'kapak', 'simge', 'ürün', 'dosya', 'adsız', 'varsayılan',
+            'default', 'hero', 'no-image', 'noimage', 'null'
         ];
         if (in_array($cleanAlt, $placeholders, true)) {
             return $this->createViolation(
@@ -46,7 +48,7 @@ class ImageAltPlaceholder extends AbstractRule
         }
 
         // Filename checks
-        if (preg_match('/\.(png|jpg|jpeg|gif|svg|webp|bmp)$/i', $cleanAlt)) {
+        if (preg_match('/^[^\s]+\.(png|jpg|jpeg|gif|svg|webp|bmp)$/i', $cleanAlt) || preg_match('/\.(png|jpg|jpeg|gif|svg|webp|bmp)$/i', $cleanAlt)) {
             return $this->createViolation(
                 $element,
                 'Image alt text should not be a filename.',

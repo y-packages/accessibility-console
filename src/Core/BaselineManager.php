@@ -24,7 +24,12 @@ class BaselineManager
         }
 
         foreach ($data['violations'] as $item) {
-            if (isset($item['file'], $item['ruleId'], $item['htmlSnippet'])) {
+            if (!is_array($item)) {
+                continue;
+            }
+            if (isset($item['file'], $item['ruleId'], $item['htmlSnippet'])
+                && is_string($item['file']) && is_string($item['ruleId']) && is_string($item['htmlSnippet'])
+            ) {
                 $key = $this->calculateKey($item['file'], $item['ruleId'], $item['htmlSnippet']);
                 $this->ignoredKeys[$key] = true;
             }

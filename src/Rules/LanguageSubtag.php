@@ -26,7 +26,7 @@ class LanguageSubtag extends AbstractRule
         // Simple IETF language tag format check (e.g. "en", "tr", "en-US", "zh-Hant")
         $isValid = preg_match('/^[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $lang);
 
-        if (!$isValid || $lang === '') {
+        if (!$isValid) {
             return $this->createViolation(
                 $element,
                 $this->getDescription(),

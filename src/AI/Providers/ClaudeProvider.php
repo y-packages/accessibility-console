@@ -51,7 +51,11 @@ class ClaudeProvider implements AiProviderInterface
             ]);
 
             $data = json_decode($response->getBody()->getContents(), true);
-            if (is_array($data) && isset($data['content'][0]['text']) && is_string($data['content'][0]['text'])) {
+            if (is_array($data)
+                && isset($data['content']) && is_array($data['content'])
+                && isset($data['content'][0]) && is_array($data['content'][0])
+                && isset($data['content'][0]['text']) && is_string($data['content'][0]['text'])
+            ) {
                 return $data['content'][0]['text'];
             }
             return null;

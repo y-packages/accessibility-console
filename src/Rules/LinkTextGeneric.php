@@ -17,7 +17,8 @@ class LinkTextGeneric extends AbstractRule
     /** @var array<int, string> */
     private array $genericWords = [
         'click here', 'click', 'read more', 'more', 'here', 'download', 'go', 'details', 'link', 'website', 'page', 'info',
-        'tıkla', 'tıklayın', 'devamı', 'devamını oku', 'indir', 'git', 'detay', 'detaylar', 'link', 'site', 'sayfa', 'bilgi'
+        'tıkla', 'tıklayın', 'devamı', 'devamını oku', 'indir', 'git', 'detay', 'detaylar', 'link', 'site', 'sayfa', 'bilgi',
+        'daha fazla bilgi', 'oku', 'bak', 'ayrıntılar', 'incele', 'see more', 'view', 'open'
     ];
 
     public function check(DOMElement $element): ?Violation

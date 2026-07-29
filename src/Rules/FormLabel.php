@@ -40,8 +40,8 @@ class FormLabel extends AbstractRule
             }
         }
 
-        // Check for aria-label or aria-labelledby
-        if ($element->hasAttribute('aria-label') || $element->hasAttribute('aria-labelledby')) {
+        // Check for aria-label, aria-labelledby, or title
+        if ($element->hasAttribute('aria-label') || $element->hasAttribute('aria-labelledby') || $element->hasAttribute('title')) {
             return null;
         }
 

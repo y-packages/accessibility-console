@@ -35,6 +35,7 @@ class Config
             try {
                 $content = \Symfony\Component\Yaml\Yaml::parseFile($path);
                 if (is_array($content)) {
+                    /** @var array<string, mixed> $content */
                     return new self($content);
                 }
             } catch (\Throwable $e) {
@@ -56,7 +57,7 @@ class Config
     {
         $paths = $this->get('paths');
         if (is_array($paths)) {
-            return $paths;
+            return array_values(array_filter($paths, 'is_string'));
         }
         if (is_string($paths)) {
             return [$paths];
@@ -71,7 +72,7 @@ class Config
     {
         $exclude = $this->get('exclude_paths');
         if (is_array($exclude)) {
-            return $exclude;
+            return array_values(array_filter($exclude, 'is_string'));
         }
         if (is_string($exclude)) {
             return [$exclude];
@@ -108,10 +109,10 @@ class Config
 
         if (is_array($rules)) {
             if (isset($rules['include']) && is_array($rules['include'])) {
-                $include = $rules['include'];
+                $include = array_values(array_filter($rules['include'], 'is_string'));
             }
             if (isset($rules['exclude']) && is_array($rules['exclude'])) {
-                $exclude = $rules['exclude'];
+                $exclude = array_values(array_filter($rules['exclude'], 'is_string'));
             }
         }
 
@@ -123,6 +124,7 @@ class Config
 
     public function getGeminiApiKey(): ?string
     {
-        return $this->get('gemini_api_key') ?? $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?: null;
+        $key = $this->get('gemini_api_key') ?? $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?: null;
+        return is_string($key) ? $key : null;
     }
 }

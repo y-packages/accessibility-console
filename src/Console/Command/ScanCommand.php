@@ -302,9 +302,6 @@ class ScanCommand extends Command
 
             while (!empty($queue) && count($visited) < $maxPages) {
                 $current = array_shift($queue);
-                if (!is_array($current)) {
-                    continue;
-                }
                 
                 $url = $current['url'];
                 $depth = (int)$current['depth'];

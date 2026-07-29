@@ -57,6 +57,18 @@ class AriaHiddenFocusable extends AbstractRule
             return $type !== 'hidden' && !$element->hasAttribute('disabled');
         }
 
+        if ($element->hasAttribute('contenteditable') && strtolower($element->getAttribute('contenteditable')) === 'true') {
+            return true;
+        }
+
+        if (in_array($tagName, ['details', 'summary'], true)) {
+            return true;
+        }
+
+        if (in_array($tagName, ['audio', 'video'], true) && $element->hasAttribute('controls')) {
+            return true;
+        }
+
         if ($tagName === 'iframe') {
             return true;
         }

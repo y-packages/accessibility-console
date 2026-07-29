@@ -17,7 +17,9 @@ class ImageAltRedundant extends AbstractRule
     /** @var array<int, string> */
     private array $redundantWords = [
         'resmi', 'görüntüsü', 'fotoğrafı', 'grafiği', 'logosu', 'ikonu',
-        'image of', 'photo of', 'picture of', 'graphic of', 'logo of', 'icon of'
+        'image of', 'photo of', 'picture of', 'graphic of', 'logo of', 'icon of',
+        'profile photo', 'banner image', 'background image', 'thumbnail of', 'screenshot of', 'avatar of',
+        'görseli', 'arkaplan resmi', 'profil fotoğrafı', 'küçük resmi', 'ekran görüntüsü'
     ];
 
     public function check(DOMElement $element): ?Violation

@@ -50,7 +50,12 @@ class OpenAiProvider implements AiProviderInterface
             ]);
 
             $data = json_decode($response->getBody()->getContents(), true);
-            if (is_array($data) && isset($data['choices'][0]['message']['content']) && is_string($data['choices'][0]['message']['content'])) {
+            if (is_array($data)
+                && isset($data['choices']) && is_array($data['choices'])
+                && isset($data['choices'][0]) && is_array($data['choices'][0])
+                && isset($data['choices'][0]['message']) && is_array($data['choices'][0]['message'])
+                && isset($data['choices'][0]['message']['content']) && is_string($data['choices'][0]['message']['content'])
+            ) {
                 return $data['choices'][0]['message']['content'];
             }
             return null;

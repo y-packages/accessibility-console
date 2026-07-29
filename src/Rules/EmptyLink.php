@@ -27,18 +27,64 @@ class EmptyLink extends AbstractRule
         }
 
         $text = trim($element->textContent);
-        if ($text === '' && !$element->hasAttribute('aria-label') && !$element->hasAttribute('title')) {
-            // Check for images inside
-            $imgs = $element->getElementsByTagName('img');
-            foreach ($imgs as $img) {
-                if ($img->hasAttribute('alt') && trim($img->getAttribute('alt')) !== '') {
+        if ($text !== '') {
+            return null;
+        }
+
+        if ($element->hasAttribute('aria-label') && trim($element->getAttribute('aria-label')) !== '') {
+            return null;
+        }
+
+        if ($element->hasAttribute('title') && trim($element->getAttribute('title')) !== '') {
+            return null;
+        }
+
+        // Check for images inside
+        $imgs = $element->getElementsByTagName('img');
+        foreach ($imgs as $img) {
+            if ($img->hasAttribute('alt') && trim($img->getAttribute('alt')) !== '') {
+                return null;
+            }
+        }
+
+        $svgs = $element->getElementsByTagName('svg');
+        foreach ($svgs as $svg) {
+            $titles = $svg->getElementsByTagName('title');
+            foreach ($titles as $title) {
+                if (trim($title->textContent) !== '') {
                     return null;
                 }
             }
-            
-            return $this->createViolation($element, $this->getDescription(), 'Add text content or an aria-label to the link.');
         }
 
-        return null;
+        $doc = $element->ownerDocument;
+        if ($doc !== null) {
+            $xpath = new \DOMXPath($doc);
+            
+            $roleImgs = $xpath->query('.//*[@role="img"]', $element);
+            if ($roleImgs !== false) {
+                foreach ($roleImgs as $roleImg) {
+                    if ($roleImg instanceof DOMElement && $roleImg->hasAttribute('aria-label') && trim($roleImg->getAttribute('aria-label')) !== '') {
+                        return null;
+                    }
+                }
+            }
+
+            $spans = $xpath->query('.//span', $element);
+            if ($spans !== false) {
+                foreach ($spans as $span) {
+                    if ($span instanceof DOMElement) {
+                        if (trim($span->textContent) !== '') {
+                            return null;
+                        }
+                        if ($span->hasAttribute('aria-label') && trim($span->getAttribute('aria-label')) !== '') {
+                            return null;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->createViolation($element, $this->getDescription(), 'Add text content or an aria-label to the link.');
     }
 }
