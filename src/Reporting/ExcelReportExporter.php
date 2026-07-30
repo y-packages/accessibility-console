@@ -18,6 +18,10 @@ class ExcelReportExporter
      */
     public static function exportExcel(array $scanResult, string $targetUrl): string
     {
+        if (!class_exists(Spreadsheet::class)) {
+            throw new \RuntimeException('To export Excel audit reports, please install phpspreadsheet via: composer require phpoffice/phpspreadsheet');
+        }
+
         /** @var int $score */
         $score = is_numeric($scanResult['score'] ?? null) ? intval($scanResult['score']) : 0;
 

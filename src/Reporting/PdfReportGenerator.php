@@ -16,6 +16,10 @@ class PdfReportGenerator
      */
     public static function generatePdf(array $scanResult, string $targetUrl): string
     {
+        if (!class_exists(Dompdf::class)) {
+            throw new \RuntimeException('To generate PDF certificates, please install dompdf via: composer require dompdf/dompdf');
+        }
+
         /** @var int $score */
         $score = is_numeric($scanResult['score'] ?? null) ? intval($scanResult['score']) : 0;
         
