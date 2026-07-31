@@ -20,6 +20,8 @@ class PdfReportGenerator
             throw new \RuntimeException('To generate PDF certificates, please install dompdf via: composer require dompdf/dompdf');
         }
 
+        date_default_timezone_set('Europe/Istanbul');
+
         /** @var int $score */
         $score = is_numeric($scanResult['score'] ?? null) ? intval($scanResult['score']) : 0;
         
