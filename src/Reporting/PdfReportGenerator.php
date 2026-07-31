@@ -58,14 +58,15 @@ class PdfReportGenerator
         <!DOCTYPE html>
         <html>
         <head>
-            <meta charset='utf-8'>
+            <meta http-equiv='Content-Type' content='text/html; charset=utf-8'/>
             <title>WCAG 2.1 Erişilebilirlik Sertifikası ve Raporu</title>
             <style>
-                body { font-family: sans-serif; color: #1e293b; line-height: 1.5; font-size: 12px; margin: 0; padding: 20px; }
+                * { font-family: 'DejaVu Sans', sans-serif; }
+                body { font-family: 'DejaVu Sans', sans-serif; color: #1e293b; line-height: 1.5; font-size: 11px; margin: 0; padding: 20px; }
                 .header { text-align: center; border-bottom: 2px solid #38bdf8; padding-bottom: 15px; margin-bottom: 20px; }
-                .title { font-size: 20px; font-weight: bold; color: #0f172a; }
-                .subtitle { font-size: 13px; color: #64748b; margin-top: 4px; }
-                .badge { display: inline-block; padding: 6px 16px; border-radius: 12px; color: #fff; font-weight: bold; font-size: 14px; background: {$scoreColor}; }
+                .title { font-size: 18px; font-weight: bold; color: #0f172a; }
+                .subtitle { font-size: 12px; color: #64748b; margin-top: 4px; }
+                .badge { display: inline-block; padding: 6px 16px; border-radius: 12px; color: #fff; font-weight: bold; font-size: 13px; background: {$scoreColor}; }
                 .grid { margin-bottom: 20px; }
                 .card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
                 .footer { text-align: center; border-top: 1px solid #e2e8f0; padding-top: 15px; font-size: 10px; color: #94a3b8; margin-top: 30px; }
