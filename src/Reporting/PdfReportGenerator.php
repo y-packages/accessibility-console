@@ -90,7 +90,7 @@ class PdfReportGenerator
                 <div><b>Hedef URL / Dizin:</b> " . htmlspecialchars($targetUrl) . "</div>
                 <div><b>Tarama Tarihi:</b> {$dateStr}</div>
                 <div><b>Tespit Edilen İhlal Sayısı:</b> {$violationsCount} Hata</div>
-                <div><b>Raporu Üreten Motor:</b> YakNet AI & Accessibility Engine v3.1</div>
+                <div><b>Raporu Üreten Motor:</b> YakNet AI & Accessibility Engine v3.2</div>
             </div>
 
             <h3 style='color:#0f172a; border-bottom:1px solid #cbd5e1; padding-bottom:6px;'>📋 Erişilebilirlik İhlalleri ve Çözüm Detayları</h3>
