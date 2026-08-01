@@ -12,7 +12,7 @@
         "yaknet"
     ],
     "homepage": "https://forum.yak.net.tr",
-    "version": "3.2.5",
+    "version": "3.2.6",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -41,11 +41,9 @@
         "symfony/css-selector": "^6.4 || ^7.0 || ^8.0",
         "symfony/dom-crawler": "^6.4 || ^7.0 || ^8.0",
         "spatie/color": "^1.5 || ^2.0",
-        "intervention/image": "^2.7 || ^3.0"
-    },
-    "suggest": {
-        "dompdf/dompdf": "Required for generating PDF Accessibility Certificates (^2.0 || ^3.0).",
-        "phpoffice/phpspreadsheet": "Required for exporting Excel Accessibility Audit Reports (^1.28 || ^2.0 || ^3.0)."
+        "intervention/image": "^2.7 || ^3.0",
+        "dompdf/dompdf": "^2.0 || ^3.0",
+        "phpoffice/phpspreadsheet": "^1.28 || ^2.0 || ^3.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.5",
