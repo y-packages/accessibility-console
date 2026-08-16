@@ -9,11 +9,30 @@ use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
 class InputMissingAutocomplete extends AbstractRule
 {
-    public function getId(): string { return 'WCAG_1_3_5_INPUT_AUTOCOMPLETE'; }
-    public function getDescription(): string { return 'Input fields collecting personal data should have an autocomplete attribute.'; }
-    public function getStandard(): WCAGStandard { return WCAGStandard::AA; }
-    public function getSeverity(): Severity { return Severity::WARNING; }
-    public function getLevel(): int { return 3; }
+    public function getId(): string
+    {
+        return 'WCAG_3_3_8_ACCESSIBLE_AUTH';
+    }
+
+    public function getDescription(): string
+    {
+        return 'Authentication inputs must support password managers and must not disable autocomplete or paste (WCAG 2.2 SC 3.3.8).';
+    }
+
+    public function getStandard(): WCAGStandard
+    {
+        return WCAGStandard::AA;
+    }
+
+    public function getSeverity(): Severity
+    {
+        return Severity::ERROR;
+    }
+
+    public function getLevel(): int
+    {
+        return 3;
+    }
 
     public function check(DOMElement $element): ?Violation
     {
@@ -22,32 +41,37 @@ class InputMissingAutocomplete extends AbstractRule
         }
 
         $type = strtolower($element->getAttribute('type'));
-        if (in_array($type, ['hidden', 'submit', 'button', 'reset', 'checkbox', 'radio', 'image', 'file'], true)) {
-            return null;
-        }
 
-        $name = strtolower($element->getAttribute('name'));
-        $id = strtolower($element->getAttribute('id'));
-        $targetKeywords = ['email', 'phone', 'tel', 'username', 'user', 'password', 'pass', 'address', 'zip', 'city', 'country', 'name', 'fname', 'lname'];
-
-        $isPersonalField = false;
-        if (in_array($type, ['email', 'tel'], true)) {
-            $isPersonalField = true;
-        } else {
-            foreach ($targetKeywords as $keyword) {
-                if (str_contains($name, $keyword) || str_contains($id, $keyword)) {
-                    $isPersonalField = true;
-                    break;
-                }
+        // 1. Check for paste blocking on input fields (which harms accessible authentication)
+        if ($element->hasAttribute('onpaste')) {
+            $onpaste = strtolower(trim($element->getAttribute('onpaste')));
+            if (str_contains($onpaste, 'return false') || str_contains($onpaste, 'preventdefault')) {
+                return $this->createViolation(
+                    $element,
+                    "Input field blocks pasting (onpaste handler). This violates accessible authentication (WCAG 2.2 SC 3.3.8).",
+                    "Remove paste restrictions so users can paste credentials from password managers."
+                );
             }
         }
 
-        if ($isPersonalField && (!$element->hasAttribute('autocomplete') || trim($element->getAttribute('autocomplete')) === '')) {
-            return $this->createViolation(
-                $element,
-                $this->getDescription(),
-                'Add an autocomplete attribute (e.g., autocomplete="email", autocomplete="username") to improve accessibility and user experience.'
-            );
+        // 2. Password fields should not have autocomplete="off"
+        if ($type === 'password') {
+            $autocomplete = strtolower(trim($element->getAttribute('autocomplete')));
+            if ($autocomplete === 'off') {
+                return $this->createViolation(
+                    $element,
+                    "Password input has autocomplete=\"off\", preventing password managers from assisting users.",
+                    "Change autocomplete to \"current-password\" or \"new-password\" instead of \"off\"."
+                );
+            }
+
+            if ($autocomplete === '' && !$element->hasAttribute('autocomplete')) {
+                return $this->createViolation(
+                    $element,
+                    "Password input should specify autocomplete=\"current-password\" or autocomplete=\"new-password\".",
+                    "Add autocomplete=\"current-password\" (for login) or autocomplete=\"new-password\" (for registration/reset)."
+                );
+            }
         }
 
         return null;

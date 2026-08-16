@@ -23,7 +23,7 @@ class ColorContrast extends AbstractRule
         // 1. Parse inline styles (highest priority)
         $inlineStyle = $element->hasAttribute('style') ? $element->getAttribute('style') : '';
         $color = $this->parseColorValue($inlineStyle, 'color');
-        $bg = $this->parseColorValue($inlineStyle, 'background-color') ?: $this->parseColorValue($inlineStyle, 'background');
+        $bg = $this->parseColorValue($inlineStyle, 'background-color') ?: $this->parseBackgroundValue($inlineStyle);
 
         // 2. Fallback: Parse stylesheet styles
         if (($color === null || $bg === null) && $element->ownerDocument !== null) {
@@ -323,6 +323,14 @@ class ColorContrast extends AbstractRule
     {
         if (preg_match('/(?:^|;)\s*' . preg_quote($property, '/') . '\s*:\s*([^;]+)/i', $style, $matches)) {
             return $this->normalizeColorValue(trim($matches[1]));
+        }
+        return null;
+    }
+
+    private function parseBackgroundValue(string $style): ?string
+    {
+        if (preg_match('/(?:^|;)\s*background\s*:\s*([^;]+)/i', $style, $matches)) {
+            return $this->extractColorFromBackground(trim($matches[1]));
         }
         return null;
     }

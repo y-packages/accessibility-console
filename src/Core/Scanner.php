@@ -16,6 +16,11 @@ class Scanner
         $this->engine->addRule($rule);
     }
 
+    public function getEngine(): RuleEngine
+    {
+        return $this->engine;
+    }
+
     /**
      * Scan HTML content for accessibility violations.
      *
@@ -32,6 +37,10 @@ class Scanner
             'disable_html_ns' => true,
         ]);
         $doc = $html5->loadHTML($html);
+
+        // Attach raw HTML property for syntax/token level analysis
+        /** @phpstan-ignore-next-line */
+        $doc->rawHtml = $html;
 
         return $this->engine->run($doc);
     }

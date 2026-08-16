@@ -8,6 +8,16 @@ use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
 class DuplicateId extends AbstractRule
 {
+    public function getId(): string
+    {
+        return 'WCAG_4_1_2_DUPLICATE_ID';
+    }
+
+    public function getDescription(): string
+    {
+        return 'Element IDs must be unique across the document.';
+    }
+
     public function check(\DOMDocument $doc): array
     {
         $violations = [];
@@ -37,7 +47,8 @@ class DuplicateId extends AbstractRule
                 foreach ($elementsWithId as $el) {
                     $violations[] = $this->createViolation(
                         "Duplicate ID \"{$id}\" found. Element ID attribute must be unique across the document.",
-                        $el
+                        $el,
+                        "Change duplicate id=\"{$id}\" to a unique identifier."
                     );
                 }
             }
@@ -46,7 +57,18 @@ class DuplicateId extends AbstractRule
         return $violations;
     }
 
-    public function getStandard(): WCAGStandard { return WCAGStandard::A; }
-    public function getSeverity(): Severity { return Severity::ERROR; }
-    public function getLevel(): int { return 3; }
+    public function getStandard(): WCAGStandard
+    {
+        return WCAGStandard::A;
+    }
+
+    public function getSeverity(): Severity
+    {
+        return Severity::ERROR;
+    }
+
+    public function getLevel(): int
+    {
+        return 3;
+    }
 }

@@ -92,6 +92,7 @@ class HtmlDashboardReporter
                 $explanation = '';
                 $fixedCode = '';
 
+                $explanation = '';
                 if ($aiSuggestion && str_contains($aiSuggestion, 'FIX:')) {
                     preg_match('/EXPLANATION:(.*)FIX:(.*)/s', $aiSuggestion, $matches);
                     $explanation = trim($matches[1] ?? '');
@@ -103,8 +104,15 @@ class HtmlDashboardReporter
 
                 $escapedSnippet = htmlspecialchars($v->htmlSnippet, ENT_QUOTES, 'UTF-8');
                 $escapedFixed = $fixedCode ? htmlspecialchars($fixedCode, ENT_QUOTES, 'UTF-8') : '';
-                $escapedExplanation = $explanation ? htmlspecialchars($explanation, ENT_QUOTES, 'UTF-8') : '';
-                $locationStr = $v->location ? htmlspecialchars($v->location['file'] . ':' . (string)$v->location['line'], ENT_QUOTES, 'UTF-8') : 'N/A';
+                $escapedExplanation = $explanation !== '' ? htmlspecialchars($explanation, ENT_QUOTES, 'UTF-8') : '';
+                
+                $locationStr = 'N/A';
+                if ($v->location !== null) {
+                    $filePart = $v->location['file'] ?? '';
+                    $lineNum = (string)$v->location['line'];
+                    $locText = $filePart !== '' ? $filePart . ':' . $lineNum : 'Line ' . $lineNum;
+                    $locationStr = htmlspecialchars($locText, ENT_QUOTES, 'UTF-8');
+                }
                 $escapedRuleId = htmlspecialchars($v->ruleId, ENT_QUOTES, 'UTF-8');
                 $escapedMessage = htmlspecialchars($v->message, ENT_QUOTES, 'UTF-8');
 

@@ -9,11 +9,30 @@ use YakNet\AccessibilityConsole\Core\WCAGStandard;
 
 class IframeTitle extends AbstractRule
 {
-    public function getId(): string { return 'WCAG_4_1_2_IFRAME_TITLE'; }
-    public function getDescription(): string { return 'Iframe elements must have a non-empty title attribute to describe their content.'; }
-    public function getStandard(): WCAGStandard { return WCAGStandard::A; }
-    public function getSeverity(): Severity { return Severity::ERROR; }
-    public function getLevel(): int { return 2; }
+    public function getId(): string
+    {
+        return 'WCAG_4_1_2_IFRAME_TITLE';
+    }
+
+    public function getDescription(): string
+    {
+        return 'Iframe elements must have an accessible name (title or aria-label) to describe their content.';
+    }
+
+    public function getStandard(): WCAGStandard
+    {
+        return WCAGStandard::A;
+    }
+
+    public function getSeverity(): Severity
+    {
+        return Severity::ERROR;
+    }
+
+    public function getLevel(): int
+    {
+        return 2;
+    }
 
     public function check(DOMElement $element): ?Violation
     {
@@ -21,14 +40,23 @@ class IframeTitle extends AbstractRule
             return null;
         }
 
-        if (!$element->hasAttribute('title') || trim($element->getAttribute('title')) === '') {
-            return $this->createViolation(
-                $element,
-                "Iframe element is missing a descriptive title attribute.",
-                "Add a descriptive title attribute, e.g., title=\"Embedded Map\" or title=\"Video Player\"."
-            );
+        // Check if decorative / hidden
+        if ($element->getAttribute('aria-hidden') === 'true') {
+            return null;
         }
 
-        return null;
+        $title = trim($element->getAttribute('title'));
+        $ariaLabel = trim($element->getAttribute('aria-label'));
+        $ariaLabelledby = trim($element->getAttribute('aria-labelledby'));
+
+        if ($title !== '' || $ariaLabel !== '' || $ariaLabelledby !== '') {
+            return null;
+        }
+
+        return $this->createViolation(
+            $element,
+            "Iframe element is missing an accessible title or aria-label attribute.",
+            "Add a descriptive title attribute, e.g., title=\"Embedded Map\" or an aria-label."
+        );
     }
 }

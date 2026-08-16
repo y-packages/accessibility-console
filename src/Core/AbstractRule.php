@@ -24,7 +24,17 @@ abstract class AbstractRule
         return 4;
     }
 
-    protected function createViolation(string $message, \DOMElement $element): Violation
+    public function getId(): string
+    {
+        return (new \ReflectionClass($this))->getShortName();
+    }
+
+    public function getDescription(): string
+    {
+        return '';
+    }
+
+    protected function createViolation(string $message, \DOMElement $element, ?string $suggestion = null): Violation
     {
         $doc = $element->ownerDocument;
         $html = '';
@@ -36,11 +46,12 @@ abstract class AbstractRule
         }
 
         return new Violation(
-            ruleId: (new \ReflectionClass($this))->getShortName(),
+            ruleId: $this->getId(),
             message: $message,
             severity: $this->getSeverity(),
             standard: $this->getStandard(),
-            htmlSnippet: $html
+            htmlSnippet: $html,
+            fixSuggestion: $suggestion
         );
     }
 }

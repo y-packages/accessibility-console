@@ -5,6 +5,8 @@ namespace YakNet\AccessibilityConsole\Core;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use YakNet\AccessibilityConsole\Core\Locator\PreciseElementLocator;
+use YakNet\AccessibilityConsole\Parser\TemplatePreprocessor;
 use YakNet\AccessibilityConsole\Rules\RuleLevels;
 
 class Analyser
@@ -12,13 +14,22 @@ class Analyser
     private Config $config;
     private Scanner $scanner;
     private BaselineManager $baselineManager;
+    private TemplatePreprocessor $templatePreprocessor;
+    private PreciseElementLocator $elementLocator;
     private string $projectRoot;
 
-    public function __construct(?Config $config = null, ?Scanner $scanner = null, ?BaselineManager $baselineManager = null)
-    {
+    public function __construct(
+        ?Config $config = null, 
+        ?Scanner $scanner = null, 
+        ?BaselineManager $baselineManager = null,
+        ?TemplatePreprocessor $templatePreprocessor = null,
+        ?PreciseElementLocator $elementLocator = null
+    ) {
         $this->config = $config ?? new Config();
         $this->scanner = $scanner ?? $this->setupScanner();
         $this->baselineManager = $baselineManager ?? new BaselineManager();
+        $this->templatePreprocessor = $templatePreprocessor ?? new TemplatePreprocessor();
+        $this->elementLocator = $elementLocator ?? new PreciseElementLocator();
         
         $cwd = getcwd();
         $this->projectRoot = $cwd ? str_replace('\\', '/', realpath($cwd) ?: $cwd) : '.';
@@ -108,14 +119,17 @@ class Analyser
                 $onProgress($file, $index + 1, $totalFiles);
             }
             
-            $content = @file_get_contents($file);
-            if ($content === false || trim($content) === '') {
+            $rawContent = @file_get_contents($file);
+            if ($rawContent === false || trim($rawContent) === '') {
                 continue;
             }
+
+            // Preprocess templates (Blade, Twig, PHP) into scan-ready HTML preserving line numbers
+            $scanContent = $this->templatePreprocessor->preprocess($rawContent, $file);
             
             // Scan file content
             try {
-                $fileViolations = $this->scanner->scan($content);
+                $fileViolations = $this->scanner->scan($scanContent);
             } catch (\Throwable $e) {
                 // Skip if parsing failed dramatically
                 continue;
@@ -124,14 +138,17 @@ class Analyser
             $relativeFile = $this->makePathRelative($file);
             
             foreach ($fileViolations as $violation) {
-                // Find line number using line-by-line helper
-                $line = $this->locateLineInContent($content, $violation->htmlSnippet);
-                
-                // Store location in violation
-                $violation->location = [
-                    'file' => $relativeFile,
-                    'line' => $line
-                ];
+                // Find line and column number using high-precision locator
+                if (!isset($violation->location['line']) || $violation->location['line'] <= 1) {
+                    $location = $this->elementLocator->locate($rawContent, $violation->htmlSnippet);
+                    $violation->location = [
+                        'file' => $relativeFile,
+                        'line' => $location['line'],
+                        'column' => $location['column'],
+                    ];
+                } else {
+                    $violation->location['file'] = $relativeFile;
+                }
                 
                 // Check if ignored in baseline
                 if ($this->baselineManager->isIgnored($relativeFile, $violation->ruleId, $violation->htmlSnippet)) {
@@ -220,71 +237,5 @@ class Analyser
         }
         
         return $files;
-    }
-
-    private function locateLineInContent(string $content, string $snippet): int
-    {
-        $replaced = preg_replace('/\s+/', ' ', $snippet);
-        $cleanSnippet = is_string($replaced) ? trim($replaced) : '';
-        if ($cleanSnippet === '') {
-            return 1;
-        }
-
-        $searchSnippet = mb_strlen($cleanSnippet) > 150 ? mb_substr($cleanSnippet, 0, 150) : $cleanSnippet;
-        $lines = explode("\n", $content);
-        
-        // 1. Exact match pass
-        foreach ($lines as $index => $line) {
-            $replacedLine = preg_replace('/\s+/', ' ', $line);
-            $cleanLine = is_string($replacedLine) ? trim($replacedLine) : '';
-            if (str_contains($cleanLine, $searchSnippet)) {
-                return $index + 1;
-            }
-        }
-
-        // 2. Parse snippet to find tag and attributes for fuzzy match pass
-        preg_match('/<([a-zA-Z0-9]+)/', $snippet, $matches);
-        $tagName = $matches[1] ?? null;
-        if (!$tagName) {
-            return 1;
-        }
-
-        preg_match_all('/([a-zA-Z0-9-]+)=["\']([^"\']*)["\']/', $snippet, $attrMatches, PREG_SET_ORDER);
-        $attributes = [];
-        foreach ($attrMatches as $match) {
-            $attributes[$match[1]] = $match[2];
-        }
-
-        $bestLine = 1;
-        $maxScore = 0;
-
-        foreach ($lines as $index => $line) {
-            $replacedLine = preg_replace('/\s+/', ' ', $line);
-            $cleanLine = is_string($replacedLine) ? trim($replacedLine) : '';
-            
-            if (!str_contains(strtolower($cleanLine), '<' . strtolower($tagName))) {
-                continue;
-            }
-
-            $score = 1.0;
-            if (in_array(strtolower($tagName), ['html', 'head', 'body', 'title'], true)) {
-                $score += 1.0;
-            }
-
-            foreach ($attributes as $name => $value) {
-                if (str_contains($cleanLine, "$name=\"$value\"") || str_contains($cleanLine, "$name='$value'")) {
-                    $score += 2.0;
-                } elseif (str_contains($cleanLine, $name . '=')) {
-                    $score += 0.5;
-                }
-            }
-
-            if ($score > $maxScore) {
-                $maxScore = $score;
-                $bestLine = $index + 1;
-            }
-        }
-
-        return $bestLine;
     }
 }

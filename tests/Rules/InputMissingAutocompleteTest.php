@@ -8,22 +8,32 @@ use YakNet\AccessibilityConsole\Rules\InputMissingAutocomplete;
 
 class InputMissingAutocompleteTest extends TestCase
 {
-    public function testFlagsPersonalDataInputWithoutAutocomplete(): void
+    public function testFlagsPasswordWithAutocompleteOff(): void
     {
         $scanner = new Scanner();
         $scanner->addRule(new InputMissingAutocomplete());
 
-        $violations = $scanner->scan('<form><input type="email" name="user_email"></form>');
+        $violations = $scanner->scan('<form><input type="password" name="pwd" autocomplete="off"></form>');
         $this->assertCount(1, $violations);
-        $this->assertSame('WCAG_1_3_5_INPUT_AUTOCOMPLETE', $violations[0]->ruleId);
+        $this->assertSame('WCAG_3_3_8_ACCESSIBLE_AUTH', $violations[0]->ruleId);
     }
 
-    public function testPassesPersonalDataInputWithAutocomplete(): void
+    public function testFlagsPasteBlockingOnInput(): void
     {
         $scanner = new Scanner();
         $scanner->addRule(new InputMissingAutocomplete());
 
-        $violations = $scanner->scan('<form><input type="email" name="user_email" autocomplete="email"></form>');
+        $violations = $scanner->scan('<form><input type="text" name="pin" onpaste="return false;"></form>');
+        $this->assertCount(1, $violations);
+        $this->assertSame('WCAG_3_3_8_ACCESSIBLE_AUTH', $violations[0]->ruleId);
+    }
+
+    public function testPassesAccessiblePasswordInput(): void
+    {
+        $scanner = new Scanner();
+        $scanner->addRule(new InputMissingAutocomplete());
+
+        $violations = $scanner->scan('<form><input type="password" name="pwd" autocomplete="current-password"></form>');
         $this->assertCount(0, $violations);
     }
 }

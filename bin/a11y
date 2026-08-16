@@ -18,7 +18,7 @@ use YakNet\AccessibilityConsole\Console\Command\InitCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
 
 $container = ContainerFactory::create();
-$application = new Application('YakNet Accessibility Console', '3.2.6');
+$application = new Application('YakNet Accessibility Console', '3.2.7');
 
 // Add commands resolved via DI Container
 $application->addCommand($container->get(ScanCommand::class));
