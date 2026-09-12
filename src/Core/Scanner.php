@@ -40,7 +40,7 @@ class Scanner
 
         // Attach raw HTML property for syntax/token level analysis
         /** @phpstan-ignore-next-line */
-        $doc->rawHtml = $html;
+        @$doc->rawHtml = $html;
 
         return $this->engine->run($doc);
     }

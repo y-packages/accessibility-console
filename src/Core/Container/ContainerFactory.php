@@ -11,6 +11,7 @@ use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
 use YakNet\AccessibilityConsole\Console\Command\FixCommand;
 use YakNet\AccessibilityConsole\Console\Command\InitCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
+use YakNet\AccessibilityConsole\Console\Command\WatchCommand;
 
 class ContainerFactory
 {
@@ -50,6 +51,9 @@ class ContainerFactory
             },
             RulesCommand::class => function () {
                 return new RulesCommand();
+            },
+            WatchCommand::class => function () {
+                return new WatchCommand();
             },
         ]);
 

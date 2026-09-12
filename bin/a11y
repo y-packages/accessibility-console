@@ -16,14 +16,16 @@ use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
 use YakNet\AccessibilityConsole\Console\Command\FixCommand;
 use YakNet\AccessibilityConsole\Console\Command\InitCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
+use YakNet\AccessibilityConsole\Console\Command\WatchCommand;
 
 $container = ContainerFactory::create();
-$application = new Application('YakNet Accessibility Console', '3.2.7');
+$application = new Application('YakNet Accessibility Console', '3.3.0');
 
 // Add commands resolved via DI Container
 $application->addCommand($container->get(ScanCommand::class));
 $application->addCommand($container->get(FixCommand::class));
 $application->addCommand($container->get(InitCommand::class));
 $application->addCommand($container->get(RulesCommand::class));
+$application->addCommand($container->get(WatchCommand::class));
 
 $application->run();

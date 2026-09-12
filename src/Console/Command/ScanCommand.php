@@ -14,6 +14,7 @@ use YakNet\AccessibilityConsole\Core\Analyser;
 use YakNet\AccessibilityConsole\Core\BaselineManager;
 use YakNet\AccessibilityConsole\Core\Config;
 use YakNet\AccessibilityConsole\Core\Scanner;
+use YakNet\AccessibilityConsole\Core\Severity;
 use YakNet\AccessibilityConsole\Rules\RuleLevels;
 use YakNet\AccessibilityConsole\Reporting\ConsoleFormatter;
 use YakNet\AccessibilityConsole\Reporting\GithubFormatter;
@@ -22,6 +23,12 @@ use YakNet\AccessibilityConsole\Reporting\XmlFormatter;
 use YakNet\AccessibilityConsole\Reporting\MarkdownFormatter;
 use YakNet\AccessibilityConsole\Reporting\CsvFormatter;
 use YakNet\AccessibilityConsole\Reporting\GitLabCodeQualityFormatter;
+use YakNet\AccessibilityConsole\Reporting\SarifFormatter;
+use YakNet\AccessibilityConsole\Reporting\JunitFormatter;
+use YakNet\AccessibilityConsole\Reporting\PdfReportGenerator;
+use YakNet\AccessibilityConsole\Reporting\ExcelReportExporter;
+use YakNet\AccessibilityConsole\Badges\BadgeGenerator;
+use YakNet\AccessibilityConsole\Presets\PresetRegistry;
 use YakNet\AccessibilityConsole\Source\SourceLocator;
 
 class ScanCommand extends Command
@@ -35,12 +42,17 @@ class ScanCommand extends Command
             ->addArgument('target', InputArgument::OPTIONAL, 'The URL, file, or directory path to scan')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to the configuration file (default: a11y.yaml)')
             ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Accessibility scan level (1-9)')
-            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format (console, json, github)')
+            ->addOption('preset', 'p', InputOption::VALUE_REQUIRED, 'Use a pre-configured audit profile (section508, en301549, ecommerce)')
+            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format (console, json, github, xml, markdown, csv, gitlab, sarif, junit)')
+            ->addOption('min-score', null, InputOption::VALUE_REQUIRED, 'Minimum required accessibility health score (0-100) to pass the quality gate')
+            ->addOption('max-warnings', null, InputOption::VALUE_REQUIRED, 'Maximum allowed warnings before failing the quality gate')
+            ->addOption('fail-on', null, InputOption::VALUE_REQUIRED, 'Minimum severity to fail on (error, warning, info)')
             ->addOption('generate-baseline', null, InputOption::VALUE_NONE, 'Generate a baseline file containing all current violations')
             ->addOption('baseline', null, InputOption::VALUE_REQUIRED, 'Path to the baseline file')
             ->addOption('no-progress', null, InputOption::VALUE_NONE, 'Disable progress bar')
             ->addOption('ai', null, InputOption::VALUE_NONE, 'Enable AI-powered fix suggestions')
-            ->addOption('report', null, InputOption::VALUE_REQUIRED, 'Save report to file (html or json)')
+            ->addOption('report', null, InputOption::VALUE_REQUIRED, 'Save report to file (html, json, sarif, xml, junit, pdf, xlsx)')
+            ->addOption('badge', null, InputOption::VALUE_REQUIRED, 'Save SVG accessibility health badge to file (e.g. a11y-badge.svg)')
             ->addOption('project-path', null, InputOption::VALUE_REQUIRED, 'Base path for source mapping (URL scans only)')
             ->addOption('crawl', null, InputOption::VALUE_NONE, 'Crawl internal links recursively (URL scans only)')
             ->addOption('depth', null, InputOption::VALUE_REQUIRED, 'Maximum crawling depth (URL scans only)', '3')
@@ -61,6 +73,18 @@ class ScanCommand extends Command
         $levelOption = $input->getOption('level');
         $level = is_numeric($levelOption) ? (int)$levelOption : $config->getLevel();
 
+        $presetOption = $input->getOption('preset');
+        $activePreset = null;
+        if (is_string($presetOption) && $presetOption !== '') {
+            $presetRegistry = new PresetRegistry();
+            $activePreset = $presetRegistry->get($presetOption);
+            if ($activePreset !== null) {
+                $level = $activePreset->getLevel();
+            } else {
+                $io->warning("Preset '{$presetOption}' not found. Using default rules.");
+            }
+        }
+
         $formatOption = $input->getOption('format');
         $format = is_string($formatOption) ? $formatOption : $config->getFormat();
 
@@ -79,9 +103,14 @@ class ScanCommand extends Command
         }
 
         // --- LOCAL DIRECTORY / FILE STATIC ANALYSIS ENGINE ---
-        $io->title("Accessibility Console - Static Analysis");
-        $io->writeln("<fg=gray>Configuration loaded from:</> <fg=cyan>$configPath</>");
-        $io->writeln("<fg=gray>Rule Level:</> <fg=yellow>$level</>");
+        if ($format === 'console') {
+            $io->title("Accessibility Console - Static Analysis");
+            $io->writeln("<fg=gray>Configuration loaded from:</> <fg=cyan>$configPath</>");
+            $io->writeln("<fg=gray>Rule Level:</> <fg=yellow>$level</>");
+            if ($activePreset !== null) {
+                $io->writeln("<fg=gray>Compliance Preset:</> <fg=magenta>" . $activePreset->getName() . " (" . $activePreset->getDescription() . ")</>");
+            }
+        }
 
         // Resolve paths to scan
         $paths = $config->getPaths();
@@ -214,38 +243,88 @@ class ScanCommand extends Command
             $formatter = new CsvFormatter();
         } elseif ($format === 'gitlab') {
             $formatter = new GitLabCodeQualityFormatter();
+        } elseif ($format === 'sarif') {
+            $formatter = new SarifFormatter();
+        } elseif ($format === 'junit') {
+            $formatter = new JunitFormatter();
         }
 
         $exitCode = $formatter->format($violations, $baselinedCount, $io);
 
+        $metrics = \YakNet\AccessibilityConsole\Core\Metrics\AccessibilityScoreCalculator::calculate($violations);
+        $score = $metrics['score'];
+
         if ($format === 'console') {
-            $metrics = \YakNet\AccessibilityConsole\Core\Metrics\AccessibilityScoreCalculator::calculate($violations);
             $io->section("Accessibility Ratings");
-            $color = $metrics['score'] >= 90 ? 'green' : ($metrics['score'] >= 70 ? 'yellow' : 'red');
-            $io->writeln(sprintf("Health Score: <fg=%s>%d/100</>", $color, $metrics['score']));
+            $color = $score >= 90 ? 'green' : ($score >= 70 ? 'yellow' : 'red');
+            $io->writeln(sprintf("Health Score: <fg=%s>%d/100</>", $color, $score));
             $io->writeln(sprintf(" - Screen Reader / Visual Impact: <fg=cyan>%d%%</>", $metrics['visualImpact']));
             $io->writeln(sprintf(" - Keyboard / Motor Impact: <fg=cyan>%d%%</>", $metrics['motorImpact']));
             $io->writeln(sprintf(" - Cognitive / Distraction Impact: <fg=cyan>%d%%</>", $metrics['cognitiveImpact']));
             $io->newLine();
         }
 
+        // Quality Gate evaluation
+        $minScoreOption = $input->getOption('min-score');
+        $maxWarningsOption = $input->getOption('max-warnings');
+        $failOnOption = $input->getOption('fail-on');
+
+        $errorCount = 0;
+        $warningCount = 0;
+        foreach ($violations as $v) {
+            if ($v->severity === Severity::CRITICAL || $v->severity === Severity::ERROR) {
+                $errorCount++;
+            } elseif ($v->severity === Severity::WARNING) {
+                $warningCount++;
+            }
+        }
+
+        $qualityGateFailed = false;
+        /** @var string[] $gateFailures */
+        $gateFailures = [];
+
+        if ($minScoreOption !== null && is_numeric($minScoreOption)) {
+            $minScore = (int)$minScoreOption;
+            if ($score < $minScore) {
+                $qualityGateFailed = true;
+                $gateFailures[] = sprintf("Accessibility score (%d/100) is lower than the minimum required threshold of %d/100.", $score, $minScore);
+            }
+        }
+
+        if ($maxWarningsOption !== null && is_numeric($maxWarningsOption)) {
+            $maxWarnings = (int)$maxWarningsOption;
+            if ($warningCount > $maxWarnings) {
+                $qualityGateFailed = true;
+                $gateFailures[] = sprintf("Warning count (%d) exceeds the maximum allowed limit of %d.", $warningCount, $maxWarnings);
+            }
+        }
+
+        if (is_string($failOnOption)) {
+            $failOn = strtolower($failOnOption);
+            if ($failOn === 'error') {
+                $exitCode = ($errorCount > 0) ? Command::FAILURE : Command::SUCCESS;
+            } elseif ($failOn === 'warning') {
+                $exitCode = ($errorCount > 0 || $warningCount > 0) ? Command::FAILURE : Command::SUCCESS;
+            }
+        }
+
+        if ($qualityGateFailed) {
+            $io->newLine();
+            $io->error("CI/CD Quality Gate Failed:\n- " . implode("\n- ", $gateFailures));
+            $exitCode = Command::FAILURE;
+        }
+
         // Export report if --report is specified
         $reportPath = $input->getOption('report');
         if (is_string($reportPath) && $reportPath !== '') {
-            $extension = pathinfo($reportPath, PATHINFO_EXTENSION);
-            if ($extension === 'json') {
-                $serialized = [];
-                foreach ($violations as $v) {
-                    $serialized[] = $v->toArray();
-                }
-                file_put_contents($reportPath, json_encode($serialized, JSON_PRETTY_PRINT));
-            } else {
-                $reporter = new \YakNet\AccessibilityConsole\Reporting\HtmlDashboardReporter();
-                // Map violations into page format
-                $mappedViolations = ['Static Analysis' => $violations];
-                file_put_contents($reportPath, $reporter->render($mappedViolations, 'Static Analysis'));
-            }
-            $io->success("Report saved to: $reportPath");
+            $this->exportReport($reportPath, $violations, 'Static Analysis', $io);
+        }
+
+        // Export SVG badge if --badge is specified
+        $badgePath = $input->getOption('badge');
+        if (is_string($badgePath) && $badgePath !== '') {
+            file_put_contents($badgePath, BadgeGenerator::generateScoreBadge($score));
+            $io->success("SVG Badge saved to: $badgePath");
         }
 
         return $exitCode;
@@ -438,20 +517,82 @@ class ScanCommand extends Command
 
         $reportPath = $input->getOption('report');
         if (is_string($reportPath) && $reportPath !== '') {
-            $extension = pathinfo($reportPath, PATHINFO_EXTENSION);
-            if ($extension === 'json') {
-                $serialized = [];
-                foreach ($results as $url => $violations) {
-                    $serialized[$url] = array_map(fn($v) => $v->toArray(), $violations);
-                }
-                file_put_contents($reportPath, json_encode($serialized, JSON_PRETTY_PRINT));
-            } else {
-                $reporter = new \YakNet\AccessibilityConsole\Reporting\HtmlDashboardReporter();
-                file_put_contents($reportPath, $reporter->render($results, $target));
+            $allViolations = [];
+            foreach ($results as $urlViolations) {
+                $allViolations = array_merge($allViolations, $urlViolations);
             }
-            $io->success("Report saved to: $reportPath");
+            $this->exportReport($reportPath, $allViolations, $target, $io, $results);
         }
 
         return Command::FAILURE;
     }
+
+    /**
+     * Export violations to various file formats (HTML, JSON, SARIF, XML/JUnit, PDF, Excel).
+     *
+     * @param string $reportPath
+     * @param \YakNet\AccessibilityConsole\Core\Violation[] $violations
+     * @param string $targetName
+     * @param SymfonyStyle $io
+     * @param array<string, \YakNet\AccessibilityConsole\Core\Violation[]>|null $pageResults
+     */
+    private function exportReport(
+        string $reportPath,
+        array $violations,
+        string $targetName,
+        SymfonyStyle $io,
+        ?array $pageResults = null
+    ): void {
+        $extension = strtolower(pathinfo($reportPath, PATHINFO_EXTENSION));
+
+        if ($extension === 'json') {
+            if ($pageResults !== null) {
+                $serialized = [];
+                foreach ($pageResults as $url => $pageViolations) {
+                    $serialized[$url] = array_map(fn($v) => $v->toArray(), $pageViolations);
+                }
+            } else {
+                $serialized = [];
+                foreach ($violations as $v) {
+                    $serialized[] = $v->toArray();
+                }
+            }
+            file_put_contents($reportPath, (string)json_encode($serialized, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+        } elseif ($extension === 'sarif') {
+            $sarifFormatter = new SarifFormatter();
+            file_put_contents($reportPath, $sarifFormatter->render($violations));
+        } elseif ($extension === 'xml' || $extension === 'junit') {
+            $junitFormatter = new JunitFormatter();
+            file_put_contents($reportPath, $junitFormatter->render($violations));
+        } elseif ($extension === 'pdf') {
+            $metrics = \YakNet\AccessibilityConsole\Core\Metrics\AccessibilityScoreCalculator::calculate($violations);
+            $serialized = [];
+            foreach ($violations as $v) {
+                $serialized[] = $v->toArray();
+            }
+            $scanResult = [
+                'score' => $metrics['score'],
+                'violations' => $serialized,
+            ];
+            file_put_contents($reportPath, PdfReportGenerator::generatePdf($scanResult, $targetName));
+        } elseif ($extension === 'xlsx' || $extension === 'xls') {
+            $metrics = \YakNet\AccessibilityConsole\Core\Metrics\AccessibilityScoreCalculator::calculate($violations);
+            $serialized = [];
+            foreach ($violations as $v) {
+                $serialized[] = $v->toArray();
+            }
+            $scanResult = [
+                'score' => $metrics['score'],
+                'violations' => $serialized,
+            ];
+            file_put_contents($reportPath, ExcelReportExporter::exportExcel($scanResult, $targetName));
+        } else {
+            $reporter = new \YakNet\AccessibilityConsole\Reporting\HtmlDashboardReporter();
+            $mapped = $pageResults ?? [$targetName => $violations];
+            file_put_contents($reportPath, $reporter->render($mapped, $targetName));
+        }
+
+        $io->success("Report saved to: $reportPath");
+    }
 }
+

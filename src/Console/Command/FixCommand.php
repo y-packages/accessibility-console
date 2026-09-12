@@ -26,6 +26,7 @@ class FixCommand extends Command
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to the configuration file (default: a11y.yaml)')
             ->addOption('project-path', null, InputOption::VALUE_REQUIRED, 'Base path for source mapping (URL scans only)')
             ->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show what would be fixed without modifying files')
+            ->addOption('offline', null, InputOption::VALUE_NONE, 'Perform deterministic offline rule-based fixes without calling AI')
             ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Accessibility scan level (1-9)')
             ->addOption('js', null, InputOption::VALUE_NONE, 'Enable JavaScript rendering using Headless Chrome (URL scans only)');
     }
@@ -39,10 +40,11 @@ class FixCommand extends Command
         $configPath = is_string($configPathOption) ? $configPathOption : getcwd() . '/a11y.yaml';
         $config = Config::fromYaml($configPath);
 
+        $offline = (bool)$input->getOption('offline');
         $apiKey = $config->getGeminiApiKey();
-        if (!$apiKey) {
-            $io->error("GEMINI_API_KEY not found in .env or environment variables. AI fixing requires an API key.");
-            return Command::FAILURE;
+        if (!$offline && !$apiKey) {
+            $io->note("GEMINI_API_KEY not found in .env or environment variables. Running in offline rule-based healing mode (--offline).");
+            $offline = true;
         }
 
         $levelOption = $input->getOption('level');
@@ -53,11 +55,11 @@ class FixCommand extends Command
 
         // If target is a URL, run the legacy URL fixing logic
         if ($isUrl) {
-            return $this->executeUrlFix($target, $level, $apiKey, $input, $output, $io);
+            return $this->executeUrlFix($target, $level, $apiKey, $input, $output, $io, $offline);
         }
 
         // --- LOCAL FILE / DIRECTORY SELF-HEALING ENGINE ---
-        $io->title("AI Self-Healing Mode - Directory Static Analysis");
+        $io->title($offline ? "Offline Rule-Based Self-Healing Mode" : "AI Self-Healing Mode - Directory Static Analysis");
         $io->writeln("<fg=gray>Configuration loaded from:</> <fg=cyan>$configPath</>");
         $dryRun = (bool)$input->getOption('dry-run');
 
@@ -87,9 +89,9 @@ class FixCommand extends Command
             return Command::SUCCESS;
         }
 
-        $io->note(sprintf("Found %d violations. Starting AI analysis and healing...", count($violations)));
+        $io->note(sprintf("Found %d violations. Starting %s analysis and healing...", count($violations), $offline ? 'offline rule-based' : 'AI'));
 
-        $fixer = new AiFixerManager($apiKey);
+        $fixer = !$offline ? new AiFixerManager($apiKey) : null;
         $diffGenerator = new \YakNet\AccessibilityConsole\Core\Diff\VisualDiffGenerator();
         $fixedCount = 0;
 
@@ -129,9 +131,12 @@ class FixCommand extends Command
 
                 if ($rawSuggestion !== null) {
                     $isLocalFix = true;
-                } else {
+                } elseif ($fixer !== null) {
                     // Fallback to AI Suggestion
                     $rawSuggestion = $fixer->suggestFix($violation);
+                } else {
+                    $io->writeln("<fg=yellow>Skipped (Rule requires AI or manual intervention)</>");
+                    continue;
                 }
 
                 $suggestion = $rawSuggestion;
@@ -189,7 +194,7 @@ class FixCommand extends Command
     /**
      * Legacy URL scan and fix logic
      */
-    private function executeUrlFix(string $target, int $level, string $apiKey, InputInterface $input, OutputInterface $output, SymfonyStyle $io): int
+    private function executeUrlFix(string $target, int $level, ?string $apiKey, InputInterface $input, OutputInterface $output, SymfonyStyle $io, bool $offline = false): int
     {
         $projectPathOption = $input->getOption('project-path');
         $projectPath = is_string($projectPathOption) ? $projectPathOption : getcwd();
@@ -199,7 +204,7 @@ class FixCommand extends Command
         $dryRun = (bool)$input->getOption('dry-run');
         $useJs = (bool)$input->getOption('js');
 
-        $io->title("AI Self-Healing Mode - Fixing URL: $target");
+        $io->title($offline ? "Offline Rule-Based Mode - Fixing URL: $target" : "AI Self-Healing Mode - Fixing URL: $target");
 
         // Fetch HTML
         if ($useJs) {
@@ -231,9 +236,9 @@ class FixCommand extends Command
             return Command::SUCCESS;
         }
 
-        $io->note("Found " . count($violations) . " violations. Starting AI analysis...");
+        $io->note(sprintf("Found %d violations. Starting %s analysis...", count($violations), $offline ? 'offline' : 'AI'));
 
-        $fixer = new AiFixerManager($apiKey);
+        $fixer = (!$offline && is_string($apiKey) && $apiKey !== '') ? new AiFixerManager($apiKey) : null;
         $diffGenerator = new \YakNet\AccessibilityConsole\Core\Diff\VisualDiffGenerator();
         $locator = new SourceLocator($projectPath);
         $fixedCount = 0;
@@ -254,8 +259,11 @@ class FixCommand extends Command
 
             if ($rawSuggestion !== null) {
                 $isLocalFix = true;
-            } else {
+            } elseif ($fixer !== null) {
                 $rawSuggestion = $fixer->suggestFix($violation);
+            } else {
+                $io->writeln("<fg=yellow>Skipped (Rule requires AI or manual intervention)</>");
+                continue;
             }
 
             $suggestion = $rawSuggestion;
