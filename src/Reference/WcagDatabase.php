@@ -70,7 +70,7 @@ class WcagDatabase
             url: 'https://www.w3.org/WAI/WCAG21/Understanding/non-text-content.html',
             description: 'Alt attributes must not contain placeholder words or file names. They should provide a meaningful description of the image content.',
             badExample: '<img src="logo.png" alt="logo">',
-            goodExample: '<img src="logo.png" alt="YakNet Company Logo">'
+            goodExample: '<img src="logo.png" alt="YakNet Logo">'
         ));
 
         self::add(new WcagCriterion(
@@ -281,6 +281,106 @@ class WcagDatabase
             badExample: '<input type="number" autocomplete="email">',
             goodExample: '<input type="email" autocomplete="email">'
         ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_2_4_13_FOCUS_APPEARANCE',
+            title: '2.4.13 Focus Appearance',
+            level: 'AAA',
+            url: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html',
+            description: 'Focus indicators must enclose the element with at least a 2px perimeter and sufficient contrast.',
+            badExample: '<style>a:focus { outline: 1px dotted #ccc; }</style>',
+            goodExample: '<style>a:focus-visible { outline: 2px solid #005fcc; outline-offset: 2px; }</style>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_2_3_1_FLASHING_CONTENT',
+            title: '2.3.1 Three Flashes or Below Threshold',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/WCAG21/Understanding/three-flashes-or-below-threshold.html',
+            description: 'Web pages must not contain anything that flashes more than three times in any one second period.',
+            badExample: '<div style="animation: flash 0.15s infinite;">Alert</div>',
+            goodExample: '<div style="animation: fade 1.2s ease-in-out;">Alert</div>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_2_3_3_REDUCED_MOTION',
+            title: '2.3.3 Animation from Interactions',
+            level: 'AAA',
+            url: 'https://www.w3.org/WAI/WCAG21/Understanding/animation-from-interactions.html',
+            description: 'Motion animation triggered by interaction can be disabled unless essential.',
+            badExample: '<style>@keyframes slide { from { left: 0; } to { left: 100px; } }</style>',
+            goodExample: '<style>@keyframes slide { from { left: 0; } to { left: 100px; } } @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }</style>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_1_3_4_ORIENTATION_LOCK',
+            title: '1.3.4 Orientation',
+            level: 'AA',
+            url: 'https://www.w3.org/WAI/WCAG21/Understanding/orientation.html',
+            description: 'Content does not restrict its view and operation to a single display orientation such as portrait or landscape.',
+            badExample: '<style>@media (orientation: landscape) { body { display: none; } }</style>',
+            goodExample: '<style>.layout { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }</style>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_4_1_2_ARIA_TABLIST',
+            title: '4.1.2 Name, Role, Value (APG Tabs)',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/ARIA/apg/patterns/tabs/',
+            description: 'ARIA Tabs require role="tablist", child role="tab" with aria-selected & aria-controls, and role="tabpanel" with aria-labelledby.',
+            badExample: '<div role="tablist"><button role="tab">Tab 1</button></div>',
+            goodExample: '<div role="tablist"><button id="t1" role="tab" aria-selected="true" aria-controls="p1">Tab 1</button></div><div id="p1" role="tabpanel" aria-labelledby="t1">Panel</div>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_4_1_2_ARIA_COMBOBOX',
+            title: '4.1.2 Name, Role, Value (APG Combobox)',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/ARIA/apg/patterns/combobox/',
+            description: 'Combobox controls require aria-expanded, aria-controls (or aria-owns), and an accessible name.',
+            badExample: '<input role="combobox">',
+            goodExample: '<input role="combobox" aria-expanded="false" aria-controls="city-list" aria-label="Select City">'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_3_2_6_CONSISTENT_HELP',
+            title: '3.2.6 Consistent Help',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/WCAG22/Understanding/consistent-help.html',
+            description: 'Help mechanisms appear in the same relative order across pages where they are provided.',
+            badExample: '<body><header><nav><a href="/">Home</a></nav></header><form><input type="text"></form></body>',
+            goodExample: '<body><header><nav><a href="/">Home</a><a href="/help">Help</a></nav></header><form><input type="text"></form></body>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_1_4_6_CONTRAST_AAA',
+            title: '1.4.6 Contrast (Enhanced)',
+            level: 'AAA',
+            url: 'https://www.w3.org/WAI/WCAG21/Understanding/contrast-enhanced.html',
+            description: 'Visual presentation of text has a contrast ratio of at least 7:1 (4.5:1 for large text).',
+            badExample: '<p style="color: #767676; background-color: #ffffff;">Gray text</p>',
+            goodExample: '<p style="color: #333333; background-color: #ffffff;">High contrast text</p>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_2_5_2_POINTER_CANCELLATION',
+            title: '2.5.2 Pointer Cancellation',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/WCAG21/Understanding/pointer-cancellation.html',
+            description: 'Functions operated using a single pointer should not execute on the down-event.',
+            badExample: '<button onmousedown="deleteItem()">Delete</button>',
+            goodExample: '<button onclick="deleteItem()">Delete</button>'
+        ));
+
+        self::add(new WcagCriterion(
+            id: 'WCAG_2_1_4_CHAR_KEY_SHORTCUTS',
+            title: '2.1.4 Character Key Shortcuts',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/WCAG21/Understanding/character-key-shortcuts.html',
+            description: 'Single printable character keyboard shortcuts must use a modifier or be remappable/disableable.',
+            badExample: '<button aria-keyshortcuts="s">Save</button>',
+            goodExample: '<button aria-keyshortcuts="Control+S">Save</button>'
+        ));
     }
 
     public static function add(WcagCriterion $criterion): void
@@ -291,7 +391,21 @@ class WcagDatabase
     public static function get(string $ruleId): ?WcagCriterion
     {
         self::load();
-        return self::$criteria[$ruleId] ?? null;
+        if (isset(self::$criteria[$ruleId])) {
+            return self::$criteria[$ruleId];
+        }
+
+        // Prefix fallback: match by WCAG success criterion prefix (e.g. WCAG_1_1_1_* -> any WCAG_1_1_1_*)
+        if (preg_match('/^(WCAG_\d+_\d+_\d+)/', $ruleId, $m)) {
+            $prefix = $m[1];
+            foreach (self::$criteria as $id => $criterion) {
+                if (str_starts_with($id, $prefix)) {
+                    return $criterion;
+                }
+            }
+        }
+
+        return null;
     }
 
     /**

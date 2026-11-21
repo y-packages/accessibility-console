@@ -5,7 +5,9 @@ namespace YakNet\AccessibilityConsole\Core;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use SplFileInfo;
+use YakNet\AccessibilityConsole\Cache\ScanCache;
 use YakNet\AccessibilityConsole\Core\Locator\PreciseElementLocator;
+use YakNet\AccessibilityConsole\Core\Suppression\InlineSuppressionParser;
 use YakNet\AccessibilityConsole\Parser\TemplatePreprocessor;
 use YakNet\AccessibilityConsole\Rules\RuleLevels;
 
@@ -16,20 +18,29 @@ class Analyser
     private BaselineManager $baselineManager;
     private TemplatePreprocessor $templatePreprocessor;
     private PreciseElementLocator $elementLocator;
+    private InlineSuppressionParser $suppressionParser;
+    private ?ScanCache $cache;
     private string $projectRoot;
+
+    /** @var array<int, array{file: string, line: int, ruleId: string, reason: string}> */
+    private array $suppressedAuditLog = [];
 
     public function __construct(
         ?Config $config = null, 
         ?Scanner $scanner = null, 
         ?BaselineManager $baselineManager = null,
         ?TemplatePreprocessor $templatePreprocessor = null,
-        ?PreciseElementLocator $elementLocator = null
+        ?PreciseElementLocator $elementLocator = null,
+        ?InlineSuppressionParser $suppressionParser = null,
+        ?ScanCache $cache = null
     ) {
         $this->config = $config ?? new Config();
         $this->scanner = $scanner ?? $this->setupScanner();
         $this->baselineManager = $baselineManager ?? new BaselineManager();
         $this->templatePreprocessor = $templatePreprocessor ?? new TemplatePreprocessor();
         $this->elementLocator = $elementLocator ?? new PreciseElementLocator();
+        $this->suppressionParser = $suppressionParser ?? new InlineSuppressionParser();
+        $this->cache = $cache;
         
         $cwd = getcwd();
         $this->projectRoot = $cwd ? str_replace('\\', '/', realpath($cwd) ?: $cwd) : '.';
@@ -50,9 +61,7 @@ class Analyser
 
         $activeRules = [];
         foreach ($rules as $rule) {
-            $ruleId = ($rule instanceof \YakNet\AccessibilityConsole\Rules\RuleInterface) 
-                ? $rule->getId() 
-                : (new \ReflectionClass($rule))->getShortName();
+            $ruleId = $rule->getId();
                 
             if (in_array($ruleId, $rulesConfig['exclude'], true)) {
                 continue;
@@ -67,8 +76,8 @@ class Analyser
                     $reflection = new \ReflectionClass($customRuleClass);
                     if ($reflection->isInstantiable()) {
                         $rule = $reflection->newInstance();
-                        $ruleId = ($rule instanceof \YakNet\AccessibilityConsole\Rules\RuleInterface) 
-                            ? $rule->getId() 
+                        $ruleId = method_exists($rule, 'getId')
+                            ? $rule->getId()
                             : $reflection->getShortName();
                         $activeRules[$ruleId] = $rule;
                     }
@@ -113,6 +122,7 @@ class Analyser
         
         $violations = [];
         $baselinedCount = 0;
+        $this->suppressedAuditLog = [];
         
         foreach ($filesToScan as $index => $file) {
             if ($onProgress) {
@@ -124,30 +134,57 @@ class Analyser
                 continue;
             }
 
-            // Preprocess templates (Blade, Twig, PHP) into scan-ready HTML preserving line numbers
-            $scanContent = $this->templatePreprocessor->preprocess($rawContent, $file);
-            
-            // Scan file content
-            try {
-                $fileViolations = $this->scanner->scan($scanContent);
-            } catch (\Throwable $e) {
-                // Skip if parsing failed dramatically
-                continue;
+            $relativeFile = $this->makePathRelative($file);
+
+            // Parse inline suppression directives (<!-- a11y-disable... -->)
+            $suppressions = $this->suppressionParser->parse($rawContent);
+
+            // Try incremental cache hit first
+            $cachedViolations = $this->cache?->get($relativeFile, $rawContent);
+            if ($cachedViolations !== null) {
+                $fileViolations = $cachedViolations;
+            } else {
+                // Preprocess templates (Blade, Twig, Vue, JSX, PHP) into scan-ready HTML preserving line numbers
+                $scanContent = $this->templatePreprocessor->preprocess($rawContent, $file);
+
+                // Scan file content
+                try {
+                    $fileViolations = $this->scanner->scan($scanContent);
+                } catch (\Throwable $e) {
+                    // Skip if parsing failed dramatically
+                    continue;
+                }
+
+                // Enrich line/column locations before caching
+                foreach ($fileViolations as $violation) {
+                    if (!isset($violation->location['line']) || $violation->location['line'] <= 1) {
+                        $location = $this->elementLocator->locate($rawContent, $violation->htmlSnippet);
+                        $violation->location = [
+                            'file' => $relativeFile,
+                            'line' => $location['line'],
+                            'column' => $location['column'],
+                        ];
+                    } else {
+                        $violation->location['file'] = $relativeFile;
+                    }
+                }
+
+                $this->cache?->put($relativeFile, $rawContent, $fileViolations);
             }
             
-            $relativeFile = $this->makePathRelative($file);
-            
             foreach ($fileViolations as $violation) {
-                // Find line and column number using high-precision locator
-                if (!isset($violation->location['line']) || $violation->location['line'] <= 1) {
-                    $location = $this->elementLocator->locate($rawContent, $violation->htmlSnippet);
-                    $violation->location = [
+                $lineNum = $violation->location['line'] ?? 1;
+
+                // Check inline suppression directives
+                $suppressionReason = $this->suppressionParser->getSuppressionReason($suppressions, $violation->ruleId, $lineNum);
+                if ($suppressionReason !== null) {
+                    $this->suppressedAuditLog[] = [
                         'file' => $relativeFile,
-                        'line' => $location['line'],
-                        'column' => $location['column'],
+                        'line' => $lineNum,
+                        'ruleId' => $violation->ruleId,
+                        'reason' => $suppressionReason,
                     ];
-                } else {
-                    $violation->location['file'] = $relativeFile;
+                    continue;
                 }
                 
                 // Check if ignored in baseline
@@ -158,11 +195,23 @@ class Analyser
                 }
             }
         }
+
+        $this->cache?->save();
         
         return [
             'violations' => $violations,
             'baselinedCount' => $baselinedCount
         ];
+    }
+
+    /**
+     * Audit trail of violations suppressed via inline comments during the latest analysis run.
+     *
+     * @return array<int, array{file: string, line: int, ruleId: string, reason: string}>
+     */
+    public function getSuppressedAuditLog(): array
+    {
+        return $this->suppressedAuditLog;
     }
 
     public function getBaselineManager(): BaselineManager
@@ -211,7 +260,7 @@ class Analyser
             
             $iterator = new RecursiveIteratorIterator($filter, RecursiveIteratorIterator::SELF_FIRST);
             
-            $extensions = ['php', 'html', 'twig', 'blade.php'];
+            $extensions = $this->config->getExtensions();
             
             foreach ($iterator as $file) {
                 /** @var SplFileInfo $file */

@@ -44,11 +44,18 @@ EXPLANATION: [A short explanation of what you fixed and why]
 FIX: [Only the corrected HTML snippet]
 PROMPT;
 
-        try {
-            $result = $this->client->generativeModel('gemini-3.1-flash-lite')->generateContent($prompt);
-            return trim($result->text());
-        } catch (\Throwable $e) {
-            return "AI Düzeltme Hatası: " . $e->getMessage();
+        $models = ['gemini-2.5-pro', 'gemini-2.5-flash', 'gemini-1.5-pro', 'gemini-1.5-flash'];
+        $lastError = null;
+
+        foreach ($models as $model) {
+            try {
+                $result = $this->client->generativeModel($model)->generateContent($prompt);
+                return trim($result->text());
+            } catch (\Throwable $e) {
+                $lastError = $e;
+            }
         }
+
+        return "AI Düzeltme Hatası: " . $lastError->getMessage();
     }
 }

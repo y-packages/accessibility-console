@@ -136,8 +136,182 @@ class LocalHealer
                     return "EXPLANATION: Injected default lang=\"tr\" to HTML element.\nFIX: " . $fixed;
                 }
                 break;
+
+            case 'WCAG_3_2_2_BUTTON_TYPE':
+            case 'ButtonTypeExplicit':
+                if (preg_match('/<button\b(?![^>]*\btype=)/i', $snippet)) {
+                    $fixed = preg_replace('/<button\b/i', '<button type="button"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Added explicit type=\"button\" attribute to prevent unintended form submissions.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_1_1_1_SVG_FOCUSABLE':
+            case 'SvgFocusableIeEdge':
+                if (preg_match('/<svg\b(?![^>]*\bfocusable=)/i', $snippet)) {
+                    $fixed = preg_replace('/<svg\b/i', '<svg focusable="false"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Added focusable=\"false\" to decorative SVG element.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_4_1_2_ARIA_MODAL':
+            case 'AriaModalBackdrop':
+                if (preg_match('/role=["\'](?:alert)?dialog["\']/i', $snippet) && !preg_match('/\baria-modal=/i', $snippet)) {
+                    $fixed = preg_replace('/(role=["\'](?:alert)?dialog["\'])/i', '$1 aria-modal="true"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Added aria-modal=\"true\" to custom dialog container.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_4_1_2_ARIA_SWITCH':
+            case 'AriaSwitchState':
+                if (preg_match('/role=["\']switch["\']/i', $snippet) && !preg_match('/\baria-checked=/i', $snippet)) {
+                    $fixed = preg_replace('/(role=["\']switch["\'])/i', '$1 aria-checked="false"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Added default aria-checked=\"false\" to role=\"switch\" widget.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_1_4_8_TEXT_JUSTIFY':
+            case 'JustifiedTextBanned':
+                if (preg_match('/text-align\s*:\s*justify\b/i', $snippet)) {
+                    $fixed = preg_replace('/text-align\s*:\s*justify\b/i', 'text-align: start', $snippet) ?: $snippet;
+                    return "EXPLANATION: Replaced text-align: justify with text-align: start for improved readability.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_1_3_2_HTML_DIR':
+            case 'HtmlDirValid':
+                if (preg_match('/\bdir=["\'][^"\']*["\']/i', $snippet)) {
+                    $fixed = preg_replace('/\bdir=["\'][^"\']*["\']/i', 'dir="auto"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Normalized invalid dir attribute to dir=\"auto\".\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_4_1_2_IFRAME_TABINDEX':
+            case 'IframeSandboxAccessibility':
+                if (preg_match('/<iframe\b[^>]*\btabindex=["\']-\d+["\']/i', $snippet)) {
+                    $fixed = preg_replace('/\s+tabindex=["\']-\d+["\']/i', '', $snippet) ?: $snippet;
+                    return "EXPLANATION: Removed negative tabindex from visible <iframe> to restore keyboard access.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_1_4_2_MEDIA_CONTROLS':
+            case 'MediaControls':
+                if (preg_match('/<(audio|video)\b(?![^>]*\bcontrols\b)/i', $snippet)) {
+                    $fixed = preg_replace('/<(audio|video)\b/i', '<$1 controls', $snippet) ?: $snippet;
+                    return "EXPLANATION: Added controls attribute to media element for user playback control.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_4_1_2_ARIA_HIDDEN_BODY':
+            case 'AriaHiddenBody':
+                if (preg_match('/\baria-hidden=["\']true["\']/i', $snippet)) {
+                    $fixed = preg_replace('/\s+aria-hidden=["\']true["\']/i', '', $snippet) ?: $snippet;
+                    return "EXPLANATION: Removed aria-hidden=\"true\" from document root element.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_2_2_2_MARQUEE':
+            case 'MarqueeBanned':
+                $fixed = preg_replace('/<\/?marquee\b[^>]*>/i', '<div>', $snippet) ?: $snippet;
+                $fixed = preg_replace('/<\/marquee>/i', '</div>', preg_replace('/<marquee\b[^>]*>/i', '<div>', $snippet) ?: $snippet) ?: $snippet;
+                return "EXPLANATION: Replaced obsolete <marquee> element with static <div> container.\nFIX: " . $fixed;
+
+            case 'WCAG_FONT_TAG_BANNED':
+            case 'FontTagBanned':
+                $fixed = preg_replace('/<\/font>/i', '</span>', preg_replace('/<font\b[^>]*>/i', '<span>', $snippet) ?: $snippet) ?: $snippet;
+                return "EXPLANATION: Replaced obsolete <font> tag with semantic <span> element.\nFIX: " . $fixed;
+
+            case 'WCAG_1_3_1_DETAILS_SUMMARY':
+            case 'DetailsMissingSummary':
+                if (preg_match('/<details\b[^>]*>/i', $snippet) && !preg_match('/<summary\b/i', $snippet)) {
+                    $fixed = preg_replace('/(<details\b[^>]*>)/i', '$1<summary>Details</summary>', $snippet, 1) ?: $snippet;
+                    return "EXPLANATION: Inserted missing <summary> disclosure label inside <details>.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_1_3_1_FIELDSET':
+            case 'FieldsetLegend':
+                if (preg_match('/<fieldset\b[^>]*>/i', $snippet) && !preg_match('/<legend\b/i', $snippet)) {
+                    $fixed = preg_replace('/(<fieldset\b[^>]*>)/i', '$1<legend>Group</legend>', $snippet, 1) ?: $snippet;
+                    return "EXPLANATION: Inserted missing <legend> element inside <fieldset>.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_4_1_2_ARIA_DEPRECATED_ROLE':
+            case 'AriaDeprecatedRoles':
+                if (preg_match('/\brole=["\']directory["\']/i', $snippet)) {
+                    $fixed = preg_replace('/\brole=["\']directory["\']/i', 'role="list"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Replaced deprecated role=\"directory\" with role=\"list\".\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_1_3_1_BLOCKQUOTE_MISUSE':
+            case 'BlockquoteCiteValid':
+                if (preg_match('/\scite=["\']\s*["\']/i', $snippet)) {
+                    $fixed = preg_replace('/\scite=["\']\s*["\']/i', '', $snippet) ?: $snippet;
+                    return "EXPLANATION: Removed empty cite=\"\" attribute from <blockquote>.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_4_1_2_IFRAME_TITLE':
+            case 'IframeTitle':
+                if (preg_match('/<iframe\b(?![^>]*\btitle=)/i', $snippet)) {
+                    $fixed = preg_replace('/<iframe\b/i', '<iframe title="Embedded Content"', $snippet) ?: $snippet;
+                    return "EXPLANATION: Added descriptive title attribute to <iframe>.\nFIX: " . $fixed;
+                }
+                break;
+
+            case 'WCAG_2_1_1_ACCESSKEY':
+            case 'AccesskeyBanned':
+                if (preg_match('/\s+accesskey=["\'][^"\']*["\']/i', $snippet)) {
+                    $fixed = preg_replace('/\s+accesskey=["\'][^"\']*["\']/i', '', $snippet) ?: $snippet;
+                    return "EXPLANATION: Removed conflicting accesskey attribute.\nFIX: " . $fixed;
+                }
+                break;
         }
 
         return null;
+    }
+
+    /**
+     * List of rule IDs supported by deterministic offline self-healing.
+     *
+     * @return string[]
+     */
+    public static function getSupportedRuleIds(): array
+    {
+        return [
+            'WCAG_1_1_1_IMG_ALT',
+            'WCAG_1_1_1_ImageAlt',
+            'WCAG_1_1_1_SVG',
+            'WCAG_1_1_1_SVG_FOCUSABLE',
+            'WCAG_1_3_1_BLOCKQUOTE_MISUSE',
+            'WCAG_1_3_1_DETAILS_SUMMARY',
+            'WCAG_1_3_1_FIELDSET',
+            'WCAG_1_3_1_OPTGROUP_LABEL',
+            'WCAG_1_3_1_PRESENTATION_TAGS',
+            'WCAG_1_3_1_TABLE_SCOPE',
+            'WCAG_1_3_1_TABLE_SUMMARY',
+            'WCAG_1_3_2_HTML_DIR',
+            'WCAG_1_4_2_MEDIA_CONTROLS',
+            'WCAG_1_4_8_TEXT_JUSTIFY',
+            'WCAG_2_1_1_ACCESSKEY',
+            'WCAG_2_1_1_SCROLLABLE_FOCUS',
+            'WCAG_2_2_1_META_REFRESH',
+            'WCAG_2_2_2_BLINK',
+            'WCAG_2_2_2_MARQUEE',
+            'WCAG_2_4_3_AUTOFOCUS',
+            'WCAG_2_4_3_TABINDEX',
+            'WCAG_2_4_7_FOCUS_OUTLINE',
+            'WCAG_3_1_1_LANG',
+            'WCAG_3_2_2_BUTTON_TYPE',
+            'WCAG_4_1_2_ARIA_DEPRECATED_ROLE',
+            'WCAG_4_1_2_ARIA_HIDDEN_BODY',
+            'WCAG_4_1_2_ARIA_MODAL',
+            'WCAG_4_1_2_ARIA_SWITCH',
+            'WCAG_4_1_2_IFRAME_TABINDEX',
+            'WCAG_4_1_2_IFRAME_TITLE',
+            'WCAG_FONT_TAG_BANNED',
+            'WCAG_LINK_TARGET_BLANK',
+        ];
     }
 }

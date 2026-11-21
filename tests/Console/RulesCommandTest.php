@@ -18,7 +18,7 @@ class RulesCommandTest extends TestCase
         $this->assertSame(0, $exitCode);
         $output = $tester->getDisplay();
         $this->assertStringContainsString('Accessibility Console - Available Rules', $output);
-        $this->assertStringContainsString('Total rules available: 130', $output);
+        $this->assertStringContainsString('Total rules available: 175', $output);
     }
 
     public function testFilterRulesBySearch(): void

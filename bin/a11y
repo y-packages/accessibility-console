@@ -12,14 +12,19 @@ if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
 
 use Symfony\Component\Console\Application;
 use YakNet\AccessibilityConsole\Core\Container\ContainerFactory;
-use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
+use YakNet\AccessibilityConsole\Console\Command\CompareCommand;
+use YakNet\AccessibilityConsole\Console\Command\DoctorCommand;
+use YakNet\AccessibilityConsole\Console\Command\ExplainCommand;
 use YakNet\AccessibilityConsole\Console\Command\FixCommand;
 use YakNet\AccessibilityConsole\Console\Command\InitCommand;
+use YakNet\AccessibilityConsole\Console\Command\PresetsCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
+use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
+use YakNet\AccessibilityConsole\Console\Command\VpatCommand;
 use YakNet\AccessibilityConsole\Console\Command\WatchCommand;
 
 $container = ContainerFactory::create();
-$application = new Application('YakNet Accessibility Console', '3.3.0');
+$application = new Application('YakNet Accessibility Console', '4.0.0');
 
 // Add commands resolved via DI Container
 $application->addCommand($container->get(ScanCommand::class));
@@ -27,5 +32,10 @@ $application->addCommand($container->get(FixCommand::class));
 $application->addCommand($container->get(InitCommand::class));
 $application->addCommand($container->get(RulesCommand::class));
 $application->addCommand($container->get(WatchCommand::class));
+$application->addCommand($container->get(VpatCommand::class));
+$application->addCommand($container->get(CompareCommand::class));
+$application->addCommand($container->get(DoctorCommand::class));
+$application->addCommand($container->get(ExplainCommand::class));
+$application->addCommand($container->get(PresetsCommand::class));
 
 $application->run();

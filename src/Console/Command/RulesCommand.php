@@ -7,6 +7,7 @@ use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use YakNet\AccessibilityConsole\Core\SelfHealing\LocalHealer;
 use YakNet\AccessibilityConsole\Rules\RuleLevels;
 
 use Symfony\Component\Console\Input\InputOption;
@@ -21,7 +22,9 @@ class RulesCommand extends Command
             ->addOption('search', 's', InputOption::VALUE_REQUIRED, 'Search rules by ID or description')
             ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Filter rules by maximum level (1-5)')
             ->addOption('standard', null, InputOption::VALUE_REQUIRED, 'Filter rules by standard (A, AA, AAA)')
-            ->addOption('severity', null, InputOption::VALUE_REQUIRED, 'Filter rules by severity (error, warning, info)');
+            ->addOption('severity', null, InputOption::VALUE_REQUIRED, 'Filter rules by severity (critical, error, warning, info)')
+            ->addOption('principle', null, InputOption::VALUE_REQUIRED, 'Filter rules by POUR principle (Perceivable, Operable, Understandable, Robust)')
+            ->addOption('healable', null, InputOption::VALUE_NONE, 'Show only rules with deterministic offline auto-fix support');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -33,6 +36,9 @@ class RulesCommand extends Command
         $levelFilter = $input->getOption('level');
         $standardFilter = $input->getOption('standard');
         $severityFilter = $input->getOption('severity');
+        $principleFilter = $input->getOption('principle');
+        $healableOnly = (bool)$input->getOption('healable');
+        $healableIds = LocalHealer::getSupportedRuleIds();
 
         $maxLevel = is_numeric($levelFilter) ? (int)$levelFilter : 9;
         $rules = RuleLevels::getRulesForLevel($maxLevel);
@@ -42,9 +48,7 @@ class RulesCommand extends Command
 
         $matchedCount = 0;
         foreach ($rules as $rule) {
-            $ruleId = ($rule instanceof \YakNet\AccessibilityConsole\Rules\RuleInterface) 
-                ? $rule->getId() 
-                : (new \ReflectionClass($rule))->getShortName();
+            $ruleId = $rule->getId();
                 
             $description = method_exists($rule, 'getDescription') ? $rule->getDescription() : '';
             $standard = method_exists($rule, 'getStandard') ? $rule->getStandard()->value : '';
@@ -72,6 +76,27 @@ class RulesCommand extends Command
                     continue;
                 }
             }
+
+            // Principle filter
+            if (is_string($principleFilter) && $principleFilter !== '') {
+                $rulePrinciple = 'Robust';
+                if (preg_match('/WCAG_([1-4])_/', $ruleId, $m)) {
+                    $rulePrinciple = match ((int)$m[1]) {
+                        1 => 'Perceivable',
+                        2 => 'Operable',
+                        3 => 'Understandable',
+                        default => 'Robust',
+                    };
+                }
+                if (strcasecmp($rulePrinciple, $principleFilter) !== 0) {
+                    continue;
+                }
+            }
+
+            // Healable filter
+            if ($healableOnly && !in_array($ruleId, $healableIds, true)) {
+                continue;
+            }
             
             $table->addRow([
                 "<fg=cyan;options=bold>$ruleId</>",
@@ -86,7 +111,10 @@ class RulesCommand extends Command
         $table->render();
         $io->newLine();
 
-        if (is_string($searchQuery) || $levelFilter !== null || is_string($standardFilter) || is_string($severityFilter)) {
+        $hasFilter = is_string($searchQuery) || $levelFilter !== null || is_string($standardFilter)
+            || is_string($severityFilter) || is_string($principleFilter) || $healableOnly;
+
+        if ($hasFilter) {
             $io->note(sprintf("Showing %d matching rules (out of %d total rules).", $matchedCount, count(RuleLevels::getRulesForLevel(9))));
         } else {
             $io->note("Total rules available: " . count($rules));

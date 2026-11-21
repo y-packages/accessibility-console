@@ -5,12 +5,25 @@ namespace YakNet\AccessibilityConsole\Core;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
+use YakNet\AccessibilityConsole\Rules\RuleExecutionStats;
 use YakNet\AccessibilityConsole\Rules\RuleInterface;
 
 class RuleEngine
 {
     /** @var array<int, mixed> */
     private array $rules = [];
+
+    private ?RuleExecutionStats $stats = null;
+
+    public function setStats(?RuleExecutionStats $stats): void
+    {
+        $this->stats = $stats;
+    }
+
+    public function getStats(): ?RuleExecutionStats
+    {
+        return $this->stats;
+    }
 
     public function addRule(mixed $rule): void
     {
@@ -47,7 +60,12 @@ class RuleEngine
 
         // 1. Run Document-level rules
         foreach ($docRules as $rule) {
+            $start = $this->stats !== null ? hrtime(true) : 0;
             $violations = $rule->check($doc);
+            if ($this->stats !== null) {
+                $elapsedMs = (hrtime(true) - $start) / 1_000_000;
+                $this->stats->record($rule->getId(), $elapsedMs, !empty($violations));
+            }
             $allViolations = array_merge($allViolations, $violations);
         }
 
@@ -63,7 +81,12 @@ class RuleEngine
                     }
 
                     foreach ($elementRules as $rule) {
+                        $start = $this->stats !== null ? hrtime(true) : 0;
                         $violation = $rule->check($element);
+                        if ($this->stats !== null) {
+                            $elapsedMs = (hrtime(true) - $start) / 1_000_000;
+                            $this->stats->record($rule->getId(), $elapsedMs, $violation !== null);
+                        }
                         if ($violation !== null) {
                             $allViolations[] = $violation;
                         }

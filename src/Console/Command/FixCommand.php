@@ -151,7 +151,7 @@ class FixCommand extends Command
                     continue;
                 }
 
-                if (is_string($rawSuggestion) && $suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:')) {
+                if ($suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:')) {
                     $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
                     continue;
                 }
@@ -278,7 +278,7 @@ class FixCommand extends Command
                 continue;
             }
 
-            if (is_string($rawSuggestion) && $suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:')) {
+            if ($suggestion === $rawSuggestion && str_contains($suggestion, 'EXPLANATION:')) {
                 $io->writeln("<fg=red>Skipped (AI could not generate a clean fix)</>");
                 continue;
             }

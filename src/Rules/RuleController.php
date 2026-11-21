@@ -22,8 +22,7 @@ class RuleController
     {
         $allRules = $rules ?? RuleLevels::getRulesForLevel(9);
         foreach ($allRules as $rule) {
-            $id = ($rule instanceof RuleInterface) ? $rule->getId() : (new \ReflectionClass($rule))->getShortName();
-            $this->rulesRegistry[$id] = $rule;
+            $this->rulesRegistry[$rule->getId()] = $rule;
         }
     }
 

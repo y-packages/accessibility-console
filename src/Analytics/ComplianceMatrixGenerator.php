@@ -26,7 +26,7 @@ class ComplianceMatrixGenerator
      *     levels: array<string, array{violations: int, percentage: float}>
      * }
      */
-    public function generate(array $violations, int $totalActiveRules = 127): array
+    public function generate(array $violations, int $totalActiveRules = 175): array
     {
         $principles = [
             'Perceivable' => ['violations' => 0, 'status' => 'Pass'],
@@ -47,6 +47,10 @@ class ComplianceMatrixGenerator
             $principleNumber = 4;
             if (preg_match('/WCAG_([1-4])_/', $v->ruleId, $m)) {
                 $principleNumber = (int)$m[1];
+            } elseif (in_array($v->ruleId, ['HeadingOrder', 'BannedSelectors', 'A11Y_VIEWPORT', 'WCAG_FONT_TAG_BANNED'], true)) {
+                $principleNumber = 1;
+            } elseif (in_array($v->ruleId, ['AccesskeyDuplicate', 'WCAG_LINK_TARGET_BLANK'], true)) {
+                $principleNumber = 2;
             }
             $pName = self::$principleMap[$principleNumber] ?? 'Robust';
             $principles[$pName]['violations']++;

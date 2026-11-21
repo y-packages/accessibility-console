@@ -76,6 +76,11 @@ class AriaRole extends AbstractRule
         return $violations;
     }
 
+    public function getDescription(): string
+    {
+        return 'ARIA role values must be valid WAI-ARIA roles and aria-controls targets must exist in the document.';
+    }
+
     public function getStandard(): WCAGStandard { return WCAGStandard::A; }
     public function getSeverity(): Severity { return Severity::ERROR; }
     public function getLevel(): int { return 3; }

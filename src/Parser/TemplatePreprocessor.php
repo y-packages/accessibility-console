@@ -7,15 +7,21 @@ class TemplatePreprocessor
     private BladeParser $bladeParser;
     private TwigParser $twigParser;
     private HtmlParser $htmlParser;
+    private VueParser $vueParser;
+    private JsxParser $jsxParser;
 
     public function __construct(
         ?BladeParser $bladeParser = null,
         ?TwigParser $twigParser = null,
-        ?HtmlParser $htmlParser = null
+        ?HtmlParser $htmlParser = null,
+        ?VueParser $vueParser = null,
+        ?JsxParser $jsxParser = null
     ) {
         $this->bladeParser = $bladeParser ?? new BladeParser();
         $this->twigParser = $twigParser ?? new TwigParser();
         $this->htmlParser = $htmlParser ?? new HtmlParser();
+        $this->vueParser = $vueParser ?? new VueParser();
+        $this->jsxParser = $jsxParser ?? new JsxParser();
     }
 
     /**
@@ -34,6 +40,12 @@ class TemplatePreprocessor
             }
             if (str_ends_with($lower, '.twig')) {
                 return $this->twigParser->parse($content);
+            }
+            if (str_ends_with($lower, '.vue')) {
+                return $this->vueParser->parse($content);
+            }
+            if (str_ends_with($lower, '.jsx') || str_ends_with($lower, '.tsx')) {
+                return $this->jsxParser->parse($content);
             }
             if (str_ends_with($lower, '.php')) {
                 return $this->preprocessPhp($content);

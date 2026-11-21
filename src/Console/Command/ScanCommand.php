@@ -10,12 +10,24 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use YakNet\AccessibilityConsole\AI\GeminiFixer;
+use YakNet\AccessibilityConsole\Analytics\HistoryTracker;
+use YakNet\AccessibilityConsole\Cache\ScanCache;
+use YakNet\AccessibilityConsole\Compliance\VpatReportGenerator;
 use YakNet\AccessibilityConsole\Core\Analyser;
 use YakNet\AccessibilityConsole\Core\BaselineManager;
 use YakNet\AccessibilityConsole\Core\Config;
 use YakNet\AccessibilityConsole\Core\Scanner;
 use YakNet\AccessibilityConsole\Core\Severity;
+use YakNet\AccessibilityConsole\Notifications\DiscordNotifier;
+use YakNet\AccessibilityConsole\Notifications\GenericWebhookNotifier;
+use YakNet\AccessibilityConsole\Notifications\MicrosoftTeamsNotifier;
+use YakNet\AccessibilityConsole\Notifications\NotificationDispatcher;
+use YakNet\AccessibilityConsole\Notifications\NotificationPayload;
+use YakNet\AccessibilityConsole\Notifications\SlackNotifier;
+use YakNet\AccessibilityConsole\Policy\PolicyEngine;
+use YakNet\AccessibilityConsole\Rules\RuleExecutionStats;
 use YakNet\AccessibilityConsole\Rules\RuleLevels;
+use YakNet\AccessibilityConsole\Reporting\CheckstyleFormatter;
 use YakNet\AccessibilityConsole\Reporting\ConsoleFormatter;
 use YakNet\AccessibilityConsole\Reporting\GithubFormatter;
 use YakNet\AccessibilityConsole\Reporting\JsonFormatter;
@@ -42,8 +54,8 @@ class ScanCommand extends Command
             ->addArgument('target', InputArgument::OPTIONAL, 'The URL, file, or directory path to scan')
             ->addOption('config', 'c', InputOption::VALUE_REQUIRED, 'Path to the configuration file (default: a11y.yaml)')
             ->addOption('level', 'l', InputOption::VALUE_REQUIRED, 'Accessibility scan level (1-9)')
-            ->addOption('preset', 'p', InputOption::VALUE_REQUIRED, 'Use a pre-configured audit profile (section508, en301549, ecommerce)')
-            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format (console, json, github, xml, markdown, csv, gitlab, sarif, junit)')
+            ->addOption('preset', 'p', InputOption::VALUE_REQUIRED, 'Use a compliance preset (section508, en301549, eaa2025, bitv2, wcag22-aa, wcag22-aaa, government, healthcare, banking, education, ecommerce)')
+            ->addOption('format', 'f', InputOption::VALUE_REQUIRED, 'Output format (console, json, github, xml, markdown, csv, gitlab, sarif, junit, checkstyle)')
             ->addOption('min-score', null, InputOption::VALUE_REQUIRED, 'Minimum required accessibility health score (0-100) to pass the quality gate')
             ->addOption('max-warnings', null, InputOption::VALUE_REQUIRED, 'Maximum allowed warnings before failing the quality gate')
             ->addOption('fail-on', null, InputOption::VALUE_REQUIRED, 'Minimum severity to fail on (error, warning, info)')
@@ -51,7 +63,16 @@ class ScanCommand extends Command
             ->addOption('baseline', null, InputOption::VALUE_REQUIRED, 'Path to the baseline file')
             ->addOption('no-progress', null, InputOption::VALUE_NONE, 'Disable progress bar')
             ->addOption('ai', null, InputOption::VALUE_NONE, 'Enable AI-powered fix suggestions')
-            ->addOption('report', null, InputOption::VALUE_REQUIRED, 'Save report to file (html, json, sarif, xml, junit, pdf, xlsx)')
+            ->addOption('report', null, InputOption::VALUE_REQUIRED, 'Save report to file (html, json, sarif, xml, junit, checkstyle, pdf, xlsx)')
+            ->addOption('vpat', null, InputOption::VALUE_REQUIRED, 'Export a VPAT 2.5 Conformance Report to file (.md, .html, or .json)')
+            ->addOption('save-history', null, InputOption::VALUE_REQUIRED, 'Append scan snapshot to a JSON history file for trend tracking')
+            ->addOption('cache', null, InputOption::VALUE_REQUIRED, 'Path to incremental content-hash cache file (e.g. .a11y-cache.json)')
+            ->addOption('clear-cache', null, InputOption::VALUE_NONE, 'Clear the incremental scan cache before scanning')
+            ->addOption('profile', null, InputOption::VALUE_NONE, 'Display rule execution timing profile (top slowest rules)')
+            ->addOption('webhook-slack', null, InputOption::VALUE_REQUIRED, 'Send scan summary to a Slack Incoming Webhook URL')
+            ->addOption('webhook-discord', null, InputOption::VALUE_REQUIRED, 'Send scan summary to a Discord Webhook URL')
+            ->addOption('webhook-teams', null, InputOption::VALUE_REQUIRED, 'Send scan summary to a Microsoft Teams Webhook URL')
+            ->addOption('webhook-url', null, InputOption::VALUE_REQUIRED, 'Send JSON payload to a generic webhook URL')
             ->addOption('badge', null, InputOption::VALUE_REQUIRED, 'Save SVG accessibility health badge to file (e.g. a11y-badge.svg)')
             ->addOption('project-path', null, InputOption::VALUE_REQUIRED, 'Base path for source mapping (URL scans only)')
             ->addOption('crawl', null, InputOption::VALUE_NONE, 'Crawl internal links recursively (URL scans only)')
@@ -74,14 +95,15 @@ class ScanCommand extends Command
         $level = is_numeric($levelOption) ? (int)$levelOption : $config->getLevel();
 
         $presetOption = $input->getOption('preset');
+        $presetName = (is_string($presetOption) && $presetOption !== '') ? $presetOption : $config->getPreset();
         $activePreset = null;
-        if (is_string($presetOption) && $presetOption !== '') {
+        if (is_string($presetName) && $presetName !== '') {
             $presetRegistry = new PresetRegistry();
-            $activePreset = $presetRegistry->get($presetOption);
+            $activePreset = $presetRegistry->get($presetName);
             if ($activePreset !== null) {
                 $level = $activePreset->getLevel();
             } else {
-                $io->warning("Preset '{$presetOption}' not found. Using default rules.");
+                $io->warning("Preset '{$presetName}' not found. Using default rules.");
             }
         }
 
@@ -120,20 +142,43 @@ class ScanCommand extends Command
 
         // Setup Analyser
         $scanner = new Scanner();
+        $enableProfile = (bool)$input->getOption('profile');
+        $executionStats = $enableProfile ? new RuleExecutionStats() : null;
+        if ($executionStats !== null) {
+            $scanner->getEngine()->setStats($executionStats);
+        }
+
         $rules = RuleLevels::getRulesForLevel($level);
         
-        // Filter rules based on config
+        // Filter rules based on config and active preset
         $rulesConfig = $config->getRulesConfig();
+        $excludedIds = $rulesConfig['exclude'];
+        if ($activePreset !== null) {
+            $excludedIds = array_values(array_unique(array_merge($excludedIds, $activePreset->getExcludedRules())));
+        }
+
         $activeRules = [];
         foreach ($rules as $rule) {
-            $ruleId = ($rule instanceof \YakNet\AccessibilityConsole\Rules\RuleInterface) 
-                ? $rule->getId() 
-                : (new \ReflectionClass($rule))->getShortName();
+            $ruleId = $rule->getId();
                 
-            if (in_array($ruleId, $rulesConfig['exclude'], true)) {
+            if (in_array($ruleId, $excludedIds, true)) {
                 continue;
             }
             $activeRules[$ruleId] = $rule;
+        }
+
+        // Ensure preset-included priority rules are active even if they belong to a higher scan level
+        if ($activePreset !== null && !empty($activePreset->getIncludedRules())) {
+            $allRulesById = [];
+            foreach (RuleLevels::getRulesForLevel(9) as $candidateRule) {
+                $cid = $candidateRule->getId();
+                $allRulesById[$cid] = $candidateRule;
+            }
+            foreach ($activePreset->getIncludedRules() as $priorityRuleId) {
+                if (!isset($activeRules[$priorityRuleId]) && isset($allRulesById[$priorityRuleId]) && !in_array($priorityRuleId, $excludedIds, true)) {
+                    $activeRules[$priorityRuleId] = $allRulesById[$priorityRuleId];
+                }
+            }
         }
 
         foreach ($rulesConfig['include'] as $customRuleClass) {
@@ -142,8 +187,8 @@ class ScanCommand extends Command
                     $reflection = new \ReflectionClass($customRuleClass);
                     if ($reflection->isInstantiable()) {
                         $rule = $reflection->newInstance();
-                        $ruleId = ($rule instanceof \YakNet\AccessibilityConsole\Rules\RuleInterface) 
-                            ? $rule->getId() 
+                        $ruleId = method_exists($rule, 'getId')
+                            ? $rule->getId()
                             : $reflection->getShortName();
                         $activeRules[$ruleId] = $rule;
                     }
@@ -161,7 +206,20 @@ class ScanCommand extends Command
             $baselineManager->load(getcwd() . '/' . $baselinePath);
         }
 
-        $analyser = new Analyser($config, $scanner, $baselineManager);
+        // Setup Incremental Scan Cache (if --cache is passed)
+        $scanCache = null;
+        $cachePathOption = $input->getOption('cache');
+        if (is_string($cachePathOption) && $cachePathOption !== '') {
+            $rulesSig = hash('sha256', implode('|', array_keys($activeRules)));
+            $scanCache = new ScanCache($cachePathOption, $rulesSig);
+            if ($input->getOption('clear-cache')) {
+                $scanCache->clear();
+            } else {
+                $scanCache->load();
+            }
+        }
+
+        $analyser = new Analyser($config, $scanner, $baselineManager, null, null, null, $scanCache);
 
         // Progress bar setup
         $progressBar = null;
@@ -229,6 +287,10 @@ class ScanCommand extends Command
             }
         }
 
+        // Apply governance policy severity overrides before formatting & scoring
+        $policyEngine = new PolicyEngine($config->getPolicyConfig());
+        $policyEngine->applySeverityOverrides($violations);
+
         // Select formatter
         $formatter = new ConsoleFormatter();
         if ($format === 'json') {
@@ -247,12 +309,15 @@ class ScanCommand extends Command
             $formatter = new SarifFormatter();
         } elseif ($format === 'junit') {
             $formatter = new JunitFormatter();
+        } elseif ($format === 'checkstyle') {
+            $formatter = new CheckstyleFormatter();
         }
 
         $exitCode = $formatter->format($violations, $baselinedCount, $io);
 
         $metrics = \YakNet\AccessibilityConsole\Core\Metrics\AccessibilityScoreCalculator::calculate($violations);
         $score = $metrics['score'];
+        $suppressedLog = $analyser->getSuppressedAuditLog();
 
         if ($format === 'console') {
             $io->section("Accessibility Ratings");
@@ -261,10 +326,34 @@ class ScanCommand extends Command
             $io->writeln(sprintf(" - Screen Reader / Visual Impact: <fg=cyan>%d%%</>", $metrics['visualImpact']));
             $io->writeln(sprintf(" - Keyboard / Motor Impact: <fg=cyan>%d%%</>", $metrics['motorImpact']));
             $io->writeln(sprintf(" - Cognitive / Distraction Impact: <fg=cyan>%d%%</>", $metrics['cognitiveImpact']));
+            if (!empty($suppressedLog)) {
+                $io->writeln(sprintf(" - Inline Suppressed Violations: <fg=yellow>%d</>", count($suppressedLog)));
+            }
             $io->newLine();
         }
 
-        // Quality Gate evaluation
+        // Execution profiling summary (--profile)
+        if ($executionStats !== null && $format === 'console') {
+            $slowest = $executionStats->getSlowestRules(10);
+            if (!empty($slowest)) {
+                $io->section('Rule Execution Profile (Top 10 Slowest)');
+                $profileTable = new \Symfony\Component\Console\Helper\Table($output);
+                $profileTable->setHeaders(['Rule ID', 'Invocations', 'Total (ms)', 'Avg (ms)', 'Violations']);
+                foreach ($slowest as $rId => $stat) {
+                    $profileTable->addRow([
+                        $rId,
+                        (string)$stat['invocations'],
+                        sprintf('%.3f', $stat['total_time_ms']),
+                        sprintf('%.4f', $stat['avg_time_ms']),
+                        (string)$stat['violations'],
+                    ]);
+                }
+                $profileTable->render();
+                $io->newLine();
+            }
+        }
+
+        // Quality Gate & Policy Engine evaluation
         $minScoreOption = $input->getOption('min-score');
         $maxWarningsOption = $input->getOption('max-warnings');
         $failOnOption = $input->getOption('fail-on');
@@ -282,6 +371,14 @@ class ScanCommand extends Command
         $qualityGateFailed = false;
         /** @var string[] $gateFailures */
         $gateFailures = [];
+
+        if ($policyEngine->hasPolicies()) {
+            $policyResult = $policyEngine->evaluate($violations);
+            if (!$policyResult->passed) {
+                $qualityGateFailed = true;
+                $gateFailures = array_merge($gateFailures, $policyResult->failures);
+            }
+        }
 
         if ($minScoreOption !== null && is_numeric($minScoreOption)) {
             $minScore = (int)$minScoreOption;
@@ -320,12 +417,41 @@ class ScanCommand extends Command
             $this->exportReport($reportPath, $violations, 'Static Analysis', $io);
         }
 
+        // Export VPAT 2.5 report if --vpat is specified
+        $vpatPath = $input->getOption('vpat');
+        if (is_string($vpatPath) && $vpatPath !== '') {
+            $vpatGenerator = new VpatReportGenerator();
+            $vpatExt = strtolower(pathinfo($vpatPath, PATHINFO_EXTENSION));
+            $vpatContent = match ($vpatExt) {
+                'html', 'htm' => $vpatGenerator->renderHtml($violations, basename((string)getcwd()) ?: 'Web Application'),
+                'json' => $vpatGenerator->renderJson($violations, basename((string)getcwd()) ?: 'Web Application'),
+                default => $vpatGenerator->renderMarkdown($violations, basename((string)getcwd()) ?: 'Web Application'),
+            };
+            file_put_contents($vpatPath, $vpatContent);
+            $io->success("VPAT 2.5 Conformance Report saved to: $vpatPath");
+        }
+
+        // Save history snapshot if --save-history is specified
+        $historyPath = $input->getOption('save-history');
+        if (is_string($historyPath) && $historyPath !== '') {
+            $tracker = new HistoryTracker();
+            $tracker->record($violations, $historyPath, implode(', ', $paths), $activePreset?->getName());
+            $trend = $tracker->computeTrend($tracker->load($historyPath));
+            if ($format === 'console') {
+                $deltaStr = $trend['score_delta'] > 0 ? '+' . $trend['score_delta'] : (string)$trend['score_delta'];
+                $io->note(sprintf('History saved (%d total runs, trend: %s, delta: %s).', $trend['runs'], $trend['trend'], $deltaStr));
+            }
+        }
+
         // Export SVG badge if --badge is specified
         $badgePath = $input->getOption('badge');
         if (is_string($badgePath) && $badgePath !== '') {
             file_put_contents($badgePath, BadgeGenerator::generateScoreBadge($score));
             $io->success("SVG Badge saved to: $badgePath");
         }
+
+        // Dispatch webhook notifications (CLI flags or a11y.yaml notifications block)
+        $this->dispatchNotifications($input, $config, implode(', ', $paths), $score, $violations, $errorCount, $warningCount);
 
         return $exitCode;
     }
@@ -561,6 +687,9 @@ class ScanCommand extends Command
         } elseif ($extension === 'sarif') {
             $sarifFormatter = new SarifFormatter();
             file_put_contents($reportPath, $sarifFormatter->render($violations));
+        } elseif ($extension === 'checkstyle') {
+            $checkstyleFormatter = new CheckstyleFormatter();
+            file_put_contents($reportPath, $checkstyleFormatter->render($violations));
         } elseif ($extension === 'xml' || $extension === 'junit') {
             $junitFormatter = new JunitFormatter();
             file_put_contents($reportPath, $junitFormatter->render($violations));
@@ -593,6 +722,77 @@ class ScanCommand extends Command
         }
 
         $io->success("Report saved to: $reportPath");
+    }
+
+    /**
+     * Dispatch configured webhook notifications (Slack, Discord, Microsoft Teams, generic JSON webhook).
+     *
+     * @param \YakNet\AccessibilityConsole\Core\Violation[] $violations
+     */
+    private function dispatchNotifications(
+        InputInterface $input,
+        Config $config,
+        string $target,
+        int $score,
+        array $violations,
+        int $errorCount,
+        int $warningCount
+    ): void {
+        $notifConfig = $config->getNotificationsConfig();
+        $dispatcher = new NotificationDispatcher();
+
+        $slackUrl = $input->getOption('webhook-slack');
+        if (!is_string($slackUrl) || $slackUrl === '') {
+            $slackUrl = is_string($notifConfig['slack_webhook'] ?? null) ? $notifConfig['slack_webhook'] : '';
+        }
+        if ($slackUrl !== '') {
+            $dispatcher->addNotifier('slack', new SlackNotifier($slackUrl));
+        }
+
+        $discordUrl = $input->getOption('webhook-discord');
+        if (!is_string($discordUrl) || $discordUrl === '') {
+            $discordUrl = is_string($notifConfig['discord_webhook'] ?? null) ? $notifConfig['discord_webhook'] : '';
+        }
+        if ($discordUrl !== '') {
+            $dispatcher->addNotifier('discord', new DiscordNotifier($discordUrl));
+        }
+
+        $teamsUrl = $input->getOption('webhook-teams');
+        if (!is_string($teamsUrl) || $teamsUrl === '') {
+            $teamsUrl = is_string($notifConfig['teams_webhook'] ?? null) ? $notifConfig['teams_webhook'] : '';
+        }
+        if ($teamsUrl !== '') {
+            $dispatcher->addNotifier('teams', new MicrosoftTeamsNotifier($teamsUrl));
+        }
+
+        $genericUrl = $input->getOption('webhook-url');
+        if (!is_string($genericUrl) || $genericUrl === '') {
+            $genericUrl = is_string($notifConfig['webhook_url'] ?? null) ? $notifConfig['webhook_url'] : '';
+        }
+        $secret = is_string($notifConfig['webhook_secret'] ?? null) ? $notifConfig['webhook_secret'] : null;
+        if ($genericUrl !== '') {
+            $dispatcher->addNotifier('webhook', new GenericWebhookNotifier($genericUrl, $secret));
+        }
+
+        if (!$dispatcher->hasNotifiers()) {
+            return;
+        }
+
+        $topViolations = array_map(
+            static fn($v): array => $v->toArray(),
+            array_slice($violations, 0, 5)
+        );
+
+        $payload = new NotificationPayload(
+            target: $target,
+            healthScore: $score,
+            totalViolations: count($violations),
+            errorCount: $errorCount,
+            warningCount: $warningCount,
+            topViolations: $topViolations
+        );
+
+        $dispatcher->dispatch($payload);
     }
 }
 

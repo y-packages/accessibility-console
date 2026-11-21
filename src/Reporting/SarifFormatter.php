@@ -124,7 +124,7 @@ class SarifFormatter implements FormatterInterface
                         'driver' => [
                             'name' => 'YakNet Accessibility Console',
                             'informationUri' => 'https://forum.yak.net.tr',
-                            'semanticVersion' => '3.3.0',
+                            'semanticVersion' => '4.0.0',
                             'rules' => array_values($rulesMap),
                         ],
                     ],

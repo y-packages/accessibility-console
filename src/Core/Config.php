@@ -127,4 +127,54 @@ class Config
         $key = $this->get('gemini_api_key') ?? $_ENV['GEMINI_API_KEY'] ?? getenv('GEMINI_API_KEY') ?: null;
         return is_string($key) ? $key : null;
     }
+
+    public function getPreset(): ?string
+    {
+        $preset = $this->get('preset');
+        return is_string($preset) && $preset !== '' ? $preset : null;
+    }
+
+    /**
+     * Governance policy configuration block from a11y.yaml.
+     *
+     * @return array<string, mixed>
+     */
+    public function getPolicyConfig(): array
+    {
+        $policy = $this->get('policy', []);
+        if (!is_array($policy)) {
+            return [];
+        }
+        /** @var array<string, mixed> $policy */
+        return $policy;
+    }
+
+    /**
+     * Notification webhook configuration block from a11y.yaml.
+     *
+     * @return array<string, mixed>
+     */
+    public function getNotificationsConfig(): array
+    {
+        $notifications = $this->get('notifications', []);
+        if (!is_array($notifications)) {
+            return [];
+        }
+        /** @var array<string, mixed> $notifications */
+        return $notifications;
+    }
+
+    /**
+     * File extensions to include during directory scans.
+     *
+     * @return array<int, string>
+     */
+    public function getExtensions(): array
+    {
+        $extensions = $this->get('extensions');
+        if (is_array($extensions)) {
+            return array_values(array_filter($extensions, 'is_string'));
+        }
+        return ['php', 'html', 'htm', 'xhtml', 'twig', 'blade.php', 'vue', 'jsx', 'tsx', 'latte'];
+    }
 }

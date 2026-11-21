@@ -1,25 +1,31 @@
 {
     "name": "yaknet/accessibility-console",
-    "description": "A professional AI-powered WCAG 2.1 accessibility scanner with self-healing capabilities.",
+    "description": "An open-source, comprehensive WCAG 2.1/2.2 & WAI-ARIA 1.2 accessibility analysis, VPAT 2.5 reporting, policy governance, and self-healing platform by YakNet.",
     "keywords": [
         "accessibility",
         "wcag",
+        "wcag22",
+        "wai-aria",
+        "vpat",
+        "en301549",
+        "section508",
         "a11y",
         "scanner",
+        "linter",
+        "static-analysis",
         "ai",
-        "gemini",
         "self-healing",
         "yaknet"
     ],
     "homepage": "https://forum.yak.net.tr",
-    "version": "3.3.0",
+    "version": "4.0.0",
     "type": "library",
     "license": "MIT",
     "authors": [
         {
-            "name": "YakNet Bilişim",
+            "name": "YakNet",
             "email": "info@yakhub.com.tr",
-            "role": "Developer"
+            "role": "Organization"
         }
     ],
     "require": {

@@ -7,10 +7,15 @@ use Psr\Container\ContainerInterface;
 use YakNet\AccessibilityConsole\Core\Config;
 use YakNet\AccessibilityConsole\Core\Analyser;
 use YakNet\AccessibilityConsole\Core\Scanner;
-use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
+use YakNet\AccessibilityConsole\Console\Command\CompareCommand;
+use YakNet\AccessibilityConsole\Console\Command\DoctorCommand;
+use YakNet\AccessibilityConsole\Console\Command\ExplainCommand;
 use YakNet\AccessibilityConsole\Console\Command\FixCommand;
 use YakNet\AccessibilityConsole\Console\Command\InitCommand;
+use YakNet\AccessibilityConsole\Console\Command\PresetsCommand;
 use YakNet\AccessibilityConsole\Console\Command\RulesCommand;
+use YakNet\AccessibilityConsole\Console\Command\ScanCommand;
+use YakNet\AccessibilityConsole\Console\Command\VpatCommand;
 use YakNet\AccessibilityConsole\Console\Command\WatchCommand;
 
 class ContainerFactory
@@ -54,6 +59,21 @@ class ContainerFactory
             },
             WatchCommand::class => function () {
                 return new WatchCommand();
+            },
+            VpatCommand::class => function () {
+                return new VpatCommand();
+            },
+            CompareCommand::class => function () {
+                return new CompareCommand();
+            },
+            DoctorCommand::class => function () {
+                return new DoctorCommand();
+            },
+            ExplainCommand::class => function () {
+                return new ExplainCommand();
+            },
+            PresetsCommand::class => function () {
+                return new PresetsCommand();
             },
         ]);
 
